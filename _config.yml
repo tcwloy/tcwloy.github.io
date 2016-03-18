@@ -78,5 +78,5 @@ baidu_analytics: 1266dfed7c76f30263acdfc6d9c45d02
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:
   type: git
-  repository: http://github.com/tcwloy/tcwloy.github.io.git
+  repository: https://github.com/tcwloy/tcwloy.github.io.git
   branch: master
