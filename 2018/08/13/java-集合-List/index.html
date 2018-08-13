@@ -103,7 +103,7 @@
 <meta property="og:description" content="接口详情概览如下是List接口中方法签名信息，继承自Collection接口的方法就不再赘述了： 方法说明addAll方法boolean addAll(int index, Collection&amp;lt;? extends E&amp;gt; c);在指定位置插入目标集合，目标位置及其右侧元素全部右移，如果调用集合最终发生了改变，则返回true12345678910@Testpublic void test">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://tcwloy.github.io/2018/08/13/java-集合-List/List接口.png">
-<meta property="og:updated_time" content="2018-08-13T13:58:00.215Z">
+<meta property="og:updated_time" content="2018-08-13T14:27:24.267Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="java集合-List">
 <meta name="twitter:description" content="接口详情概览如下是List接口中方法签名信息，继承自Collection接口的方法就不再赘述了： 方法说明addAll方法boolean addAll(int index, Collection&amp;lt;? extends E&amp;gt; c);在指定位置插入目标集合，目标位置及其右侧元素全部右移，如果调用集合最终发生了改变，则返回true12345678910@Testpublic void test">
@@ -419,6 +419,9 @@
 <h3 id="lastIndexOf方法"><a href="#lastIndexOf方法" class="headerlink" title="lastIndexOf方法"></a>lastIndexOf方法</h3><p><code>int lastIndexOf(Object o);</code>查找元素最后一次出现的位置<br>indexOf/lastIndexOf测试<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">@Test</span><br><span class="line">public void test()&#123;</span><br><span class="line">    List&lt;String&gt; list = new ArrayList();</span><br><span class="line">    list.add(&quot;b&quot;);</span><br><span class="line">    list.add(&quot;a&quot;);</span><br><span class="line">    list.add(&quot;b&quot;);</span><br><span class="line">    System.out.println(list.indexOf(&quot;b&quot;));//0</span><br><span class="line">    System.out.println(list.lastIndexOf(&quot;b&quot;));//2</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <h3 id="listIterator方法"><a href="#listIterator方法" class="headerlink" title="listIterator方法"></a>listIterator方法</h3><p><code>ListIterator&lt;E&gt; listIterator();</code>返回迭代器，遍历集合所有元素<br><code>ListIterator&lt;E&gt; listIterator(int index);</code>返回迭代器，从指定index开始向后遍历<br>测试代码<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">@Test</span><br><span class="line">public void test()&#123;</span><br><span class="line">    List&lt;String&gt; list = new ArrayList();</span><br><span class="line">    list.add(&quot;b&quot;);</span><br><span class="line">    list.add(&quot;a&quot;);</span><br><span class="line">    list.add(&quot;b&quot;);</span><br><span class="line">    for (ListIterator&lt;String&gt; iterator = list.listIterator(); iterator.hasNext();)&#123;</span><br><span class="line">        System.out.println(iterator.next());</span><br><span class="line">    &#125;//依次打印b a b</span><br><span class="line">    for (ListIterator&lt;String&gt; iterator = list.listIterator(1); iterator.hasNext();)&#123;</span><br><span class="line">        System.out.println(iterator.next());</span><br><span class="line">    &#125;//依次打印a b</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <h3 id="subList方法"><a href="#subList方法" class="headerlink" title="subList方法"></a>subList方法</h3><p><code>List&lt;E&gt; subList(int fromIndex, int toIndex);</code>返回list的子集，包含起始不包括结束<br>测试代码<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">@Test</span><br><span class="line">public void test()&#123;</span><br><span class="line">    List&lt;String&gt; list = new ArrayList();</span><br><span class="line">    list.add(&quot;b&quot;);</span><br><span class="line">    list.add(&quot;a&quot;);</span><br><span class="line">    list.add(&quot;b&quot;);</span><br><span class="line">    System.out.println(list.subList(1, 2));//[a]</span><br><span class="line">    System.out.println(list);//[b, a, b]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<blockquote>
+<p>由于Set接口继承自Collection，类中未自定义任何方法，因此不单独介绍了</p>
+</blockquote>
 
       
     </div>
@@ -465,8 +468,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2018/08/14/java-集合-Set/" rel="prev" title="java集合-Set">
-                java集合-Set <i class="fa fa-chevron-right"></i>
+              <a href="/2018/08/15/java-集合-Queue/" rel="prev" title="java集合-Queue">
+                java集合-Queue <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -546,7 +549,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives/">
-                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-count">8</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -568,7 +571,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">10</span>
+                <span class="site-state-item-count">9</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

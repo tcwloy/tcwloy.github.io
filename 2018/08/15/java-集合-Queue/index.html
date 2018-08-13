@@ -94,18 +94,20 @@
 
 
 
-<meta name="description" content="java js python spring mybatis 架构 微服务 web">
+<meta name="description" content="接口详情概览Queue接口抽象的是一个FIFO队列。如下是Queue接口中方法签名信息，继承自Collection接口的方法就不再赘述了： 方法说明offer方法boolean offer(E e);将对象添加到队尾，添加成功返回true，失败返回false poll方法E poll();获取队首元素并返回（返回时移除该元素），如果队列为空，则返回null peek方法E peek();获取队首元">
 <meta name="keywords" content="java,collection,集合,Queue">
 <meta property="og:type" content="article">
 <meta property="og:title" content="java集合-Queue">
 <meta property="og:url" content="http://tcwloy.github.io/2018/08/15/java-集合-Queue/index.html">
 <meta property="og:site_name" content="tank的个人博客">
-<meta property="og:description" content="java js python spring mybatis 架构 微服务 web">
+<meta property="og:description" content="接口详情概览Queue接口抽象的是一个FIFO队列。如下是Queue接口中方法签名信息，继承自Collection接口的方法就不再赘述了： 方法说明offer方法boolean offer(E e);将对象添加到队尾，添加成功返回true，失败返回false poll方法E poll();获取队首元素并返回（返回时移除该元素），如果队列为空，则返回null peek方法E peek();获取队首元">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2018-08-13T14:00:10.920Z">
+<meta property="og:image" content="http://tcwloy.github.io/2018/08/15/java-集合-Queue/Queue接口.png">
+<meta property="og:updated_time" content="2018-08-13T14:40:24.111Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="java集合-Queue">
-<meta name="twitter:description" content="java js python spring mybatis 架构 微服务 web">
+<meta name="twitter:description" content="接口详情概览Queue接口抽象的是一个FIFO队列。如下是Queue接口中方法签名信息，继承自Collection接口的方法就不再赘述了： 方法说明offer方法boolean offer(E e);将对象添加到队尾，添加成功返回true，失败返回false poll方法E poll();获取队首元素并返回（返回时移除该元素），如果队列为空，则返回null peek方法E peek();获取队首元">
+<meta name="twitter:image" content="http://tcwloy.github.io/2018/08/15/java-集合-Queue/Queue接口.png">
 
 
 
@@ -403,7 +405,16 @@
       
 
       
-        
+        <h2 id="接口详情概览"><a href="#接口详情概览" class="headerlink" title="接口详情概览"></a>接口详情概览</h2><p>Queue接口抽象的是一个FIFO队列。如下是Queue接口中方法签名信息，继承自Collection接口的方法就不再赘述了：<br><img src="/2018/08/15/java-集合-Queue/Queue接口.png" title="Queue接口详情"></p>
+<h2 id="方法说明"><a href="#方法说明" class="headerlink" title="方法说明"></a>方法说明</h2><h3 id="offer方法"><a href="#offer方法" class="headerlink" title="offer方法"></a>offer方法</h3><p><code>boolean offer(E e);</code>将对象添加到队尾，添加成功返回true，失败返回false</p>
+<h3 id="poll方法"><a href="#poll方法" class="headerlink" title="poll方法"></a>poll方法</h3><p><code>E poll();</code>获取队首元素并返回（返回时移除该元素），如果队列为空，则返回null</p>
+<h3 id="peek方法"><a href="#peek方法" class="headerlink" title="peek方法"></a>peek方法</h3><p><code>E peek();</code>获取队首元素并返回（返回时不移除该元素），如果队列为空，则返回null</p>
+<h3 id="remove方法"><a href="#remove方法" class="headerlink" title="remove方法"></a>remove方法</h3><p><code>E remove();</code>获取队首元素并返回（返回时移除该元素），如果队列为空，则抛出NoSuchElementException</p>
+<h3 id="element方法"><a href="#element方法" class="headerlink" title="element方法"></a>element方法</h3><p><code>E element();</code>获取队首元素并返回（返回时不移除该元素），如果队列为空，则抛出NoSuchElementException</p>
+<blockquote>
+<p>测试代码<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">@Test</span><br><span class="line">public void test()&#123;</span><br><span class="line">    Queue&lt;String&gt; queue = new LinkedList&lt;&gt;();</span><br><span class="line">    System.out.println(queue.offer(&quot;1&quot;));//true</span><br><span class="line">    System.out.println(queue.offer(&quot;2&quot;));//true</span><br><span class="line">    System.out.println(queue.offer(&quot;3&quot;));//true</span><br><span class="line">    System.out.println(queue.poll());//1</span><br><span class="line">    System.out.println(queue.peek());//2</span><br><span class="line">    System.out.println(queue.remove());//2</span><br><span class="line">    System.out.println(queue.element());//3</span><br><span class="line">    System.out.println(queue.remove());//3</span><br><span class="line">    System.out.println(queue.peek());//null</span><br><span class="line">    System.out.println(queue.poll());//null</span><br><span class="line">    System.out.println(queue.element());//NoSuchElementException</span><br><span class="line">    System.out.println(queue.remove());//NoSuchElementException</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+</blockquote>
+
       
     </div>
     
@@ -439,8 +450,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/08/14/java-集合-Set/" rel="next" title="java集合-Set">
-                <i class="fa fa-chevron-left"></i> java集合-Set
+              <a href="/2018/08/13/java-集合-List/" rel="next" title="java集合-List">
+                <i class="fa fa-chevron-left"></i> java集合-List
               </a>
             
           </div>
@@ -505,8 +516,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview sidebar-panel sidebar-panel-active">
+      <section class="site-overview sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="http://tx.haiqq.com/uploads/allimg/c170727/150111a15b30-331Z.jpg"
@@ -521,7 +541,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives/">
-                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-count">8</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -543,7 +563,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">10</span>
+                <span class="site-state-item-count">9</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
@@ -568,6 +588,22 @@
 
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#接口详情概览"><span class="nav-number">1.</span> <span class="nav-text">接口详情概览</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#方法说明"><span class="nav-number">2.</span> <span class="nav-text">方法说明</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#offer方法"><span class="nav-number">2.1.</span> <span class="nav-text">offer方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#poll方法"><span class="nav-number">2.2.</span> <span class="nav-text">poll方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#peek方法"><span class="nav-number">2.3.</span> <span class="nav-text">peek方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#remove方法"><span class="nav-number">2.4.</span> <span class="nav-text">remove方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#element方法"><span class="nav-number">2.5.</span> <span class="nav-text">element方法</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
