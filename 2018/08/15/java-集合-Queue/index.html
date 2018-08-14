@@ -100,19 +100,19 @@
 
 
 
-<meta name="description" content="接口详情概览Queue接口抽象的是一个FIFO队列。如下是Queue接口中方法签名信息，继承自Collection接口的方法就不再赘述了： 方法说明offer方法boolean offer(E e);将对象添加到队尾，添加成功返回true，失败返回false poll方法E poll();获取队首元素并返回（返回时移除该元素），如果队列为空，则返回null peek方法E peek();获取队首元">
+<meta name="description" content="接口详情概览Queue接口抽象的是一个FIFO队列，队列通常（但并非一定）以 FIFO（先进先出）的方式排序各个元素。不过优先级队列和 LIFO 队列（或堆栈）例外。如下是Queue接口中方法签名信息，继承自Collection接口的方法就不再赘述了： 方法说明offer方法boolean offer(E e);将对象添加到队尾，添加成功返回true，失败返回false poll方法E poll(">
 <meta name="keywords" content="java,collection,集合,Queue">
 <meta property="og:type" content="article">
 <meta property="og:title" content="java集合-Queue">
 <meta property="og:url" content="http://tcwloy.github.io/2018/08/15/java-集合-Queue/index.html">
 <meta property="og:site_name" content="tank的个人博客">
-<meta property="og:description" content="接口详情概览Queue接口抽象的是一个FIFO队列。如下是Queue接口中方法签名信息，继承自Collection接口的方法就不再赘述了： 方法说明offer方法boolean offer(E e);将对象添加到队尾，添加成功返回true，失败返回false poll方法E poll();获取队首元素并返回（返回时移除该元素），如果队列为空，则返回null peek方法E peek();获取队首元">
+<meta property="og:description" content="接口详情概览Queue接口抽象的是一个FIFO队列，队列通常（但并非一定）以 FIFO（先进先出）的方式排序各个元素。不过优先级队列和 LIFO 队列（或堆栈）例外。如下是Queue接口中方法签名信息，继承自Collection接口的方法就不再赘述了： 方法说明offer方法boolean offer(E e);将对象添加到队尾，添加成功返回true，失败返回false poll方法E poll(">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://tcwloy.github.io/2018/08/15/java-集合-Queue/Queue接口.png">
-<meta property="og:updated_time" content="2018-08-13T14:40:24.111Z">
+<meta property="og:updated_time" content="2018-08-14T05:38:42.988Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="java集合-Queue">
-<meta name="twitter:description" content="接口详情概览Queue接口抽象的是一个FIFO队列。如下是Queue接口中方法签名信息，继承自Collection接口的方法就不再赘述了： 方法说明offer方法boolean offer(E e);将对象添加到队尾，添加成功返回true，失败返回false poll方法E poll();获取队首元素并返回（返回时移除该元素），如果队列为空，则返回null peek方法E peek();获取队首元">
+<meta name="twitter:description" content="接口详情概览Queue接口抽象的是一个FIFO队列，队列通常（但并非一定）以 FIFO（先进先出）的方式排序各个元素。不过优先级队列和 LIFO 队列（或堆栈）例外。如下是Queue接口中方法签名信息，继承自Collection接口的方法就不再赘述了： 方法说明offer方法boolean offer(E e);将对象添加到队尾，添加成功返回true，失败返回false poll方法E poll(">
 <meta name="twitter:image" content="http://tcwloy.github.io/2018/08/15/java-集合-Queue/Queue接口.png">
 
 
@@ -411,7 +411,7 @@
       
 
       
-        <h2 id="接口详情概览"><a href="#接口详情概览" class="headerlink" title="接口详情概览"></a>接口详情概览</h2><p>Queue接口抽象的是一个FIFO队列。如下是Queue接口中方法签名信息，继承自Collection接口的方法就不再赘述了：<br><img src="/2018/08/15/java-集合-Queue/Queue接口.png" title="Queue接口详情"></p>
+        <h2 id="接口详情概览"><a href="#接口详情概览" class="headerlink" title="接口详情概览"></a>接口详情概览</h2><p>Queue接口抽象的是一个FIFO队列，队列通常（但并非一定）以 FIFO（先进先出）的方式排序各个元素。不过优先级队列和 LIFO 队列（或堆栈）例外。<br>如下是Queue接口中方法签名信息，继承自Collection接口的方法就不再赘述了：<br><img src="/2018/08/15/java-集合-Queue/Queue接口.png" title="Queue接口详情"></p>
 <h2 id="方法说明"><a href="#方法说明" class="headerlink" title="方法说明"></a>方法说明</h2><h3 id="offer方法"><a href="#offer方法" class="headerlink" title="offer方法"></a>offer方法</h3><p><code>boolean offer(E e);</code>将对象添加到队尾，添加成功返回true，失败返回false</p>
 <h3 id="poll方法"><a href="#poll方法" class="headerlink" title="poll方法"></a>poll方法</h3><p><code>E poll();</code>获取队首元素并返回（返回时移除该元素），如果队列为空，则返回null</p>
 <h3 id="peek方法"><a href="#peek方法" class="headerlink" title="peek方法"></a>peek方法</h3><p><code>E peek();</code>获取队首元素并返回（返回时不移除该元素），如果队列为空，则返回null</p>
@@ -420,6 +420,33 @@
 <blockquote>
 <p>测试代码<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">@Test</span><br><span class="line">public void test()&#123;</span><br><span class="line">    Queue&lt;String&gt; queue = new LinkedList&lt;&gt;();</span><br><span class="line">    System.out.println(queue.offer(&quot;1&quot;));//true</span><br><span class="line">    System.out.println(queue.offer(&quot;2&quot;));//true</span><br><span class="line">    System.out.println(queue.offer(&quot;3&quot;));//true</span><br><span class="line">    System.out.println(queue.poll());//1</span><br><span class="line">    System.out.println(queue.peek());//2</span><br><span class="line">    System.out.println(queue.remove());//2</span><br><span class="line">    System.out.println(queue.element());//3</span><br><span class="line">    System.out.println(queue.remove());//3</span><br><span class="line">    System.out.println(queue.peek());//null</span><br><span class="line">    System.out.println(queue.poll());//null</span><br><span class="line">    System.out.println(queue.element());//NoSuchElementException</span><br><span class="line">    System.out.println(queue.remove());//NoSuchElementException</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 </blockquote>
+<h2 id="关注点"><a href="#关注点" class="headerlink" title="关注点"></a>关注点</h2><p>队列提供两种插入、提取和检查操作。每个方法都存在两种形式：一种抛出异常（操作失败时），另一种返回一个特殊值（null 或 false，具体取决于操作）</p>
+<table>
+<thead>
+<tr>
+<th>操作</th>
+<th style="text-align:center">抛出移除</th>
+<th style="text-align:center">返回值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>插入</td>
+<td style="text-align:center">add(e)</td>
+<td style="text-align:center">offer(e)</td>
+</tr>
+<tr>
+<td>移除</td>
+<td style="text-align:center">remove()</td>
+<td style="text-align:center">poll()</td>
+</tr>
+<tr>
+<td>查询</td>
+<td style="text-align:center">element()</td>
+<td style="text-align:center">peek()</td>
+</tr>
+</tbody>
+</table>
 
       
     </div>
@@ -604,7 +631,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#接口详情概览"><span class="nav-number">1.</span> <span class="nav-text">接口详情概览</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#方法说明"><span class="nav-number">2.</span> <span class="nav-text">方法说明</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#offer方法"><span class="nav-number">2.1.</span> <span class="nav-text">offer方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#poll方法"><span class="nav-number">2.2.</span> <span class="nav-text">poll方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#peek方法"><span class="nav-number">2.3.</span> <span class="nav-text">peek方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#remove方法"><span class="nav-number">2.4.</span> <span class="nav-text">remove方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#element方法"><span class="nav-number">2.5.</span> <span class="nav-text">element方法</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#接口详情概览"><span class="nav-number">1.</span> <span class="nav-text">接口详情概览</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#方法说明"><span class="nav-number">2.</span> <span class="nav-text">方法说明</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#offer方法"><span class="nav-number">2.1.</span> <span class="nav-text">offer方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#poll方法"><span class="nav-number">2.2.</span> <span class="nav-text">poll方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#peek方法"><span class="nav-number">2.3.</span> <span class="nav-text">peek方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#remove方法"><span class="nav-number">2.4.</span> <span class="nav-text">remove方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#element方法"><span class="nav-number">2.5.</span> <span class="nav-text">element方法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#关注点"><span class="nav-number">3.</span> <span class="nav-text">关注点</span></a></li></ol></div>
             
 
           </div>
