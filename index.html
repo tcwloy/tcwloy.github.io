@@ -414,7 +414,22 @@
       
         
           
-            
+            <h2 id="接口详情概览"><a href="#接口详情概览" class="headerlink" title="接口详情概览"></a>接口详情概览</h2><p>如下是AbstractCollection中方法签名信息，我们重点关注相关接口的实现（终于可以扒代码了，不用干巴巴的解释接口干嘛用了）：<br><img src="/2018/08/16/java-集合-AbstractCollection/AbstractCollection.png" title="AbstractCollection"></p>
+<h2 id="方法实现说明"><a href="#方法实现说明" class="headerlink" title="方法实现说明"></a>方法实现说明</h2><h3 id="isEmpty"><a href="#isEmpty" class="headerlink" title="isEmpty"></a>isEmpty</h3><p>无需多说，size方法（由子类实现）返回值等于0时，方法返回true<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">public boolean isEmpty() &#123;</span><br><span class="line">    return size() == 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="contains"><a href="#contains" class="headerlink" title="contains"></a>contains</h3><p>源码如下，很容易懂。遍历集合，如果传入的是null，则在集合中查找是否有null元素，如果传入值不为null，则使用equals方法查找equals为true的元素，找到则返回true。因为查找过程中使用到equals方法进行比较，因此使用contains方法时，需要考虑容纳的对象需要重写equals方法<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">public boolean contains(Object o) &#123;</span><br><span class="line">    Iterator&lt;E&gt; it = iterator();</span><br><span class="line">    if (o==null) &#123;</span><br><span class="line">        while (it.hasNext())</span><br><span class="line">            if (it.next()==null)</span><br><span class="line">                return true;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        while (it.hasNext())</span><br><span class="line">            if (o.equals(it.next()))</span><br><span class="line">                return true;</span><br><span class="line">    &#125;</span><br><span class="line">    return false;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>调皮一下，我们知道Objects方法中提供了一个equals方法，我们如果将上述源码修改为如下实现，会有区别么<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">public boolean contains(Object o) &#123;</span><br><span class="line">    Iterator&lt;E&gt; it = iterator();</span><br><span class="line">    while (it.hasNext())</span><br><span class="line">        if (Objects.equals(o, it.next()))</span><br><span class="line">            return true;</span><br><span class="line">    return false;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="toArray"><a href="#toArray" class="headerlink" title="toArray"></a>toArray</h3><p>toArray方法有两个，实现方式基本一致，我们先选其中一个进行分析，源码如下<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">public Object[] toArray() &#123;</span><br><span class="line">    // Estimate size of array; be prepared to see more or fewer elements</span><br><span class="line">    Object[] r = new Object[size()];</span><br><span class="line">    Iterator&lt;E&gt; it = iterator();</span><br><span class="line">    for (int i = 0; i &lt; r.length; i++) &#123;</span><br><span class="line">        if (! it.hasNext()) // fewer elements than expected</span><br><span class="line">            return Arrays.copyOf(r, i);</span><br><span class="line">        r[i] = it.next();</span><br><span class="line">    &#125;</span><br><span class="line">    return it.hasNext() ? finishToArray(r, it) : r;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>进入方法后，首先new了一个与当前集合容量相同的数组r；第二步，遍历数组的同时通过迭代器获取元素，并放置到数组r中，思考下，这里为什么要循环数组进行赋值而不是遍历集合呢？假设外层通过迭代器循环遍历集合，当我们在进行处理时，有另一个线程向集合中插入了一个新的元素，此时集合的size已经超过了r的容量，当处理新插入的元素时，就会抛出数组越界异常，因此直接遍历数组就可以避免这种情况。再看<code>if (! it.hasNext()) // fewer elements than expected</code>这个判断，相信经过上面的分析，你已经知道为什么了，对了，因为在循环的时候，另一个线程也有可能从集合中删除元素，如果迭代过程中发现没有下一个元素了，那就截取r数组前i个元素返回。<code>return it.hasNext() ? finishToArray(r, it) : r;</code>最后，判断集合是否还有剩余元素，如果没有直接返回r，如果有则进入finishToArray方法。下面来看看finishToArray方法<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">private static &lt;T&gt; T[] finishToArray(T[] r, Iterator&lt;?&gt; it) &#123;</span><br><span class="line">    int i = r.length;</span><br><span class="line">    while (it.hasNext()) &#123;</span><br><span class="line">        int cap = r.length;</span><br><span class="line">        if (i == cap) &#123;</span><br><span class="line">            int newCap = cap + (cap &gt;&gt; 1) + 1;</span><br><span class="line">            // overflow-conscious code</span><br><span class="line">            if (newCap - MAX_ARRAY_SIZE &gt; 0)</span><br><span class="line">                newCap = hugeCapacity(cap + 1);</span><br><span class="line">            r = Arrays.copyOf(r, newCap);</span><br><span class="line">        &#125;</span><br><span class="line">        r[i++] = (T)it.next();</span><br><span class="line">    &#125;</span><br><span class="line">    // trim if overallocated</span><br><span class="line">    return (i == r.length) ? r : Arrays.copyOf(r, i);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这里，首先取到数组的长度给i，循环体内又取数组长度给到cap，看看这个变量名在加上之前数组已经被填满了，二者一结合，就知道，嗯，应该是要扩容了。果然，当i和cap相等的时候，我们根据原数组长度计算出一个新的容量，新的容量为原来数组长度加上长度的一半再加1，为什么要加1呢，我是这么理解的，可能我们的容器中本来容纳的对象比较少，比如只有1个，此时进入这段代码进行扩容的时候，如果不加1，那<code>1 + (1 &gt;&gt; 1)</code>算出来还是1，再往下进行<code>r[i++] = (T)it.next();</code>操作的时候就会出错了。好了，我们继续往下看，我们发现多了个<code>MAX_ARRAY_SIZE</code>,这个东西的定义是这样的<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"> /**</span><br><span class="line">    * The maximum size of array to allocate.</span><br><span class="line">    * Some VMs reserve some header words in an array.</span><br><span class="line">    * Attempts to allocate larger arrays may result in</span><br><span class="line">    * OutOfMemoryError: Requested array size exceeds VM limit</span><br><span class="line">    */</span><br><span class="line">private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;</span><br></pre></td></tr></table></figure></p>
+<p>粘这么多是希望多关注下上面的注释，看完你就明白了，因为部分虚拟机在数组的头部会预留一些信息，所以这个就是数组所能分配的最大容量了，如果试图分配更大的空间，可能会引发OutOfMemoryError。好了，回头再看，if判断是为了防止扩容后的容量超过MAX_ARRAY_SIZE了，如果真的超过了，就需要使用hugeCapacity方法重新计算扩容后的容量值了<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">private static int hugeCapacity(int minCapacity) &#123;</span><br><span class="line">    if (minCapacity &lt; 0) // overflow</span><br><span class="line">        throw new OutOfMemoryError</span><br><span class="line">            (&quot;Required array size too large&quot;);</span><br><span class="line">    return (minCapacity &gt; MAX_ARRAY_SIZE) ?</span><br><span class="line">        Integer.MAX_VALUE :</span><br><span class="line">        MAX_ARRAY_SIZE;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>进入hugeCapacity方法后（注意，传入的是原始容量+1），首先判断minCapacity是否小于0，旁边的overflow真实贴心，这说明minCapacity并不是太小，反而是太大，因为java中的int是有符号的，最高位是符号位，当一个数太大溢出了，表示的是符号位也就成了1，这个时候这个数就是负数了，此时，抛出OutOfMemoryError异常，如果minCapacity大于MAX_ARRAY_SIZE，那就把Integer.MAX_VALUE返回，否则返回MAX_ARRAY_SIZE。扩容完毕后，通过<code>r[i++] = (T)it.next();</code>赋值。继续循环，当容量满了之后，再次扩容。最终处理完成后,<code>return (i == r.length) ? r : Arrays.copyOf(r, i);</code>判断元素的实际个数和数组长度是否一致，一致则直接返回，不一致的话，通过<code>Arrays.copyOf(r, i)</code>返回刚好容纳所有元素的数组。<br><code>public &lt;T&gt; T[] toArray(T[] a)</code>方法通过代码注释说明<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">public &lt;T&gt; T[] toArray(T[] a) &#123;</span><br><span class="line">    // Estimate size of array; be prepared to see more or fewer elements</span><br><span class="line">    int size = size();</span><br><span class="line">    //如果传入数组长度大于size，则直接用传入数组保存元素，否则通过反射生成大小为size的对应类型的数组</span><br><span class="line">    T[] r = a.length &gt;= size ? a :</span><br><span class="line">                (T[])java.lang.reflect.Array</span><br><span class="line">                .newInstance(a.getClass().getComponentType(), size);</span><br><span class="line">    Iterator&lt;E&gt; it = iterator();</span><br><span class="line"></span><br><span class="line">    for (int i = 0; i &lt; r.length; i++) &#123;</span><br><span class="line">        //如果集合中没有元素了</span><br><span class="line">        if (! it.hasNext()) &#123; // fewer elements than expected</span><br><span class="line">            if (a == r) &#123;//如果r使用的就是传入的数组，则剩余位置用null填充</span><br><span class="line">                r[i] = null; // null-terminate</span><br><span class="line">            &#125; else if (a.length &lt; i) &#123;</span><br><span class="line">                //如果容器中有元素被移除，且传入数组的长度小于容器中当前容纳对象的个数，则返回数组中容纳的元素</span><br><span class="line">                return Arrays.copyOf(r, i);</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                //如果前两个条件都不满足，则将r中的元素都拷贝到a数组中，并对余出的位置填充为null</span><br><span class="line">                System.arraycopy(r, 0, a, 0, i);</span><br><span class="line">                if (a.length &gt; i) &#123;</span><br><span class="line">                    a[i] = null;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            return a;</span><br><span class="line">        &#125;</span><br><span class="line">        r[i] = (T)it.next();</span><br><span class="line">    &#125;</span><br><span class="line">    // more elements than expected 同toArray()方法中的分析</span><br><span class="line">    return it.hasNext() ? finishToArray(r, it) : r;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="remove"><a href="#remove" class="headerlink" title="remove"></a>remove</h3><p>比较简单，放出代码，不单独分析<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">public boolean remove(Object o) &#123;</span><br><span class="line">    Iterator&lt;E&gt; it = iterator();</span><br><span class="line">    if (o==null) &#123;</span><br><span class="line">        while (it.hasNext()) &#123;</span><br><span class="line">            if (it.next()==null) &#123;</span><br><span class="line">                it.remove();</span><br><span class="line">                return true;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        while (it.hasNext()) &#123;</span><br><span class="line">            if (o.equals(it.next())) &#123;</span><br><span class="line">                it.remove();</span><br><span class="line">                return true;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    return false;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="containsAll"><a href="#containsAll" class="headerlink" title="containsAll"></a>containsAll</h3><p>containsAll也比较简单，循环入参集合中的元素，如果有一个元素不在当前集合中（调用contains方法），就返回false<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">public boolean containsAll(Collection&lt;?&gt; c) &#123;</span><br><span class="line">    for (Object e : c)</span><br><span class="line">        if (!contains(e))</span><br><span class="line">            return false;</span><br><span class="line">    return true;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="addAll"><a href="#addAll" class="headerlink" title="addAll"></a>addAll</h3><p>循环调用add方法即可，add成功标志位置为true<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">public boolean addAll(Collection&lt;? extends E&gt; c) &#123;</span><br><span class="line">    boolean modified = false;</span><br><span class="line">    for (E e : c)</span><br><span class="line">        if (add(e))</span><br><span class="line">            modified = true;</span><br><span class="line">    return modified;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="removeAll"><a href="#removeAll" class="headerlink" title="removeAll"></a>removeAll</h3><p>循环中remove元素，有一点比较好奇，为啥addAll中不需要<code>Objects.requireNonNull(c);</code>，虽然也没啥影响<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">public boolean removeAll(Collection&lt;?&gt; c) &#123;</span><br><span class="line">    Objects.requireNonNull(c);</span><br><span class="line">    boolean modified = false;</span><br><span class="line">    Iterator&lt;?&gt; it = iterator();</span><br><span class="line">    while (it.hasNext()) &#123;</span><br><span class="line">        if (c.contains(it.next())) &#123;</span><br><span class="line">            it.remove();</span><br><span class="line">            modified = true;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    return modified;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="retainAll"><a href="#retainAll" class="headerlink" title="retainAll"></a>retainAll</h3><p>如果集合c中不存在该元素，则删除，保留存在的元素。如果有元素被删除，则标志位置为true<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">public boolean retainAll(Collection&lt;?&gt; c) &#123;</span><br><span class="line">    Objects.requireNonNull(c);</span><br><span class="line">    boolean modified = false;</span><br><span class="line">    Iterator&lt;E&gt; it = iterator();</span><br><span class="line">    while (it.hasNext()) &#123;</span><br><span class="line">        if (!c.contains(it.next())) &#123;</span><br><span class="line">            it.remove();</span><br><span class="line">            modified = true;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    return modified;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="clear"><a href="#clear" class="headerlink" title="clear"></a>clear</h3><p>简单，循环remove即可<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">public void clear() &#123;</span><br><span class="line">    Iterator&lt;E&gt; it = iterator();</span><br><span class="line">    while (it.hasNext()) &#123;</span><br><span class="line">        it.next();</span><br><span class="line">        it.remove();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+
           
         
       
@@ -584,6 +599,9 @@
 <h3 id="push方法"><a href="#push方法" class="headerlink" title="push方法"></a>push方法</h3><p><code>void push(E e);</code>元素入栈，等同于addFirst方法</p>
 <h3 id="pop方法"><a href="#pop方法" class="headerlink" title="pop方法"></a>pop方法</h3><p><code>void pop(E e);</code>元素出栈，等同于removeFirst方法</p>
 <h3 id="descendingIterator方法"><a href="#descendingIterator方法" class="headerlink" title="descendingIterator方法"></a>descendingIterator方法</h3><p><code>Iterator&lt;E&gt; descendingIterator();</code>返回以逆向顺序在此双端队列的元素上进行迭代的迭代器。</p>
+<blockquote>
+<p>测试代码<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">@Test</span><br><span class="line">public void test()&#123;</span><br><span class="line">    Deque&lt;String&gt; deque = new LinkedList&lt;&gt;();</span><br><span class="line">    deque.addFirst(&quot;1&quot;);</span><br><span class="line">    deque.addLast(&quot;2&quot;);</span><br><span class="line">    System.out.println(deque.offerFirst(&quot;3&quot;));//true</span><br><span class="line">    System.out.println(deque.offerLast(&quot;4&quot;));//true</span><br><span class="line">    System.out.println(deque);//[3, 1, 2, 4]</span><br><span class="line"></span><br><span class="line">    System.out.println(deque.removeFirst());//3</span><br><span class="line">    System.out.println(deque.removeLast());//4</span><br><span class="line">    System.out.println(deque.pollFirst());//1</span><br><span class="line">    System.out.println(deque.pollLast());//2</span><br><span class="line"></span><br><span class="line">    deque.offerFirst(&quot;1&quot;);</span><br><span class="line">    deque.offerFirst(&quot;2&quot;);</span><br><span class="line">    deque.offerFirst(&quot;1&quot;);</span><br><span class="line">    System.out.println(deque);//[1, 2, 1]</span><br><span class="line">    deque.removeFirstOccurrence(&quot;1&quot;);</span><br><span class="line">    System.out.println(deque);//[2, 1]</span><br><span class="line">    deque.removeLastOccurrence(&quot;1&quot;);//[2]</span><br><span class="line">    deque.removeFirst();</span><br><span class="line"></span><br><span class="line">    System.out.println(deque.peekFirst());//null</span><br><span class="line">    System.out.println(deque.peekLast());//null</span><br><span class="line">//        System.out.println(deque.getFirst());//NoSuchElementException</span><br><span class="line">//        System.out.println(deque.getLast());//NoSuchElementException</span><br><span class="line"></span><br><span class="line">    Deque&lt;String&gt; stack = new LinkedList&lt;&gt;();</span><br><span class="line">    stack.push(&quot;1&quot;);</span><br><span class="line">    stack.push(&quot;2&quot;);</span><br><span class="line">    stack.push(&quot;3&quot;);</span><br><span class="line">    System.out.println(stack.pop());//3</span><br><span class="line">    System.out.println(stack.pop());//2</span><br><span class="line">    System.out.println(stack.pop());//1</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+</blockquote>
 <h2 id="关注点"><a href="#关注点" class="headerlink" title="关注点"></a>关注点</h2><p>此接口定义在双端队列两端访问元素的方法。提供插入、移除和检查元素的方法。每种方法都存在两种形式：一种形式在操作失败时抛出异常，另一种形式返回一个特殊值（null 或 false，具体取决于操作）。插入操作的后一种形式是专为使用有容量限制的 Deque 实现设计的；在大多数实现中，插入操作不能失败。   </p>
 <table>
 <thead>
@@ -1036,6 +1054,147 @@
 <p>由于Set接口继承自Collection，类中未自定义任何方法，因此不单独介绍了</p>
 </blockquote>
 
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://tcwloy.github.io/2018/08/14/重拾数据结构与算法-综述/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="tank">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://tx.haiqq.com/uploads/allimg/c170727/150111a15b30-331Z.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="tank的个人博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/08/14/重拾数据结构与算法-综述/" itemprop="url">重拾数据结构与算法</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-08-14T17:19:59+08:00">
+                2018-08-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/数据结构与算法/" itemprop="url" rel="index">
+                    <span itemprop="name">数据结构与算法</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            
           
         
       
@@ -1763,7 +1922,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives/">
-                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-count">9</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -1774,7 +1933,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-count">5</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1785,7 +1944,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-count">11</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
