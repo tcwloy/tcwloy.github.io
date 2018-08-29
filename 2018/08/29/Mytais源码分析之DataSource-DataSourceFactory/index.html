@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+  <meta name="baidu-site-verification" content="aBFaYGSIOr" />
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="google-site-verification" content="true" />
+
+
+
+
+
+
+
+  <meta name="baidu-site-verification" content="true" />
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Mybatis,源码分析,DataSource," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2" />
+
+
+
+
+
+
+<meta name="description" content="接口定义1234567public interface DataSourceFactory &amp;#123;  void setProperties(Properties props);  DataSource getDataSource();&amp;#125; 接口主要包括两个方法：setProperties用于设置数据库的连接属性及数据源所需要的配置信息，getDataSource用于返回数据源信息，通">
+<meta name="keywords" content="Mybatis,源码分析,DataSource">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mytais源码分析之DataSource DataSourceFactory">
+<meta property="og:url" content="http://tcwloy.github.io/2018/08/29/Mytais源码分析之DataSource-DataSourceFactory/index.html">
+<meta property="og:site_name" content="tank的个人博客">
+<meta property="og:description" content="接口定义1234567public interface DataSourceFactory &amp;#123;  void setProperties(Properties props);  DataSource getDataSource();&amp;#125; 接口主要包括两个方法：setProperties用于设置数据库的连接属性及数据源所需要的配置信息，getDataSource用于返回数据源信息，通">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://tcwloy.github.io/2018/08/29/Mytais源码分析之DataSource-DataSourceFactory/DataSourceFactory.png">
+<meta property="og:updated_time" content="2018-08-29T09:23:08.850Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Mytais源码分析之DataSource DataSourceFactory">
+<meta name="twitter:description" content="接口定义1234567public interface DataSourceFactory &amp;#123;  void setProperties(Properties props);  DataSource getDataSource();&amp;#125; 接口主要包括两个方法：setProperties用于设置数据库的连接属性及数据源所需要的配置信息，getDataSource用于返回数据源信息，通">
+<meta name="twitter:image" content="http://tcwloy.github.io/2018/08/29/Mytais源码分析之DataSource-DataSourceFactory/DataSourceFactory.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://tcwloy.github.io/2018/08/29/Mytais源码分析之DataSource-DataSourceFactory/"/>
+
+
+
+
+
+  <title>Mytais源码分析之DataSource DataSourceFactory | tank的个人博客</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?393f7b635abb8ad26dbf17705d960277";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">tank的个人博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://tcwloy.github.io/2018/08/29/Mytais源码分析之DataSource-DataSourceFactory/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="tank">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://tx.haiqq.com/uploads/allimg/c170727/150111a15b30-331Z.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="tank的个人博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Mytais源码分析之DataSource DataSourceFactory</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-08-29T16:19:41+08:00">
+                2018-08-29
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Mybatis/" itemprop="url" rel="index">
+                    <span itemprop="name">Mybatis</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="接口定义"><a href="#接口定义" class="headerlink" title="接口定义"></a>接口定义</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">public interface DataSourceFactory &#123;</span><br><span class="line"></span><br><span class="line">  void setProperties(Properties props);</span><br><span class="line"></span><br><span class="line">  DataSource getDataSource();</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接口主要包括两个方法：setProperties用于设置数据库的连接属性及数据源所需要的配置信息，getDataSource用于返回数据源信息，通过数据源即可获取相应的数据库连接</p>
+<h2 id="继承关系"><a href="#继承关系" class="headerlink" title="继承关系"></a>继承关系</h2><img src="/2018/08/29/Mytais源码分析之DataSource-DataSourceFactory/DataSourceFactory.png" title="DataSourceFactory">
+<h2 id="UnpooledDataSourceFactory"><a href="#UnpooledDataSourceFactory" class="headerlink" title="UnpooledDataSourceFactory"></a>UnpooledDataSourceFactory</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">public UnpooledDataSourceFactory() &#123;</span><br><span class="line">  this.dataSource = new UnpooledDataSource();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>构造方法直接生成UnpooledDataSource对象。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">`public void setProperties(Properties properties) &#123;</span><br><span class="line">    Properties driverProperties = new Properties();</span><br><span class="line">    MetaObject metaDataSource = SystemMetaObject.forObject(dataSource);//获取datasource元信息，MetaObject后面单独分析，此处暂时理解为类似于反射</span><br><span class="line">    for (Object key : properties.keySet()) &#123;//通过循环，给datasource的属性设置配置中的信息</span><br><span class="line">      String propertyName = (String) key;</span><br><span class="line">      if (propertyName.startsWith(DRIVER_PROPERTY_PREFIX)) &#123;</span><br><span class="line">        String value = properties.getProperty(propertyName);</span><br><span class="line">        driverProperties.setProperty(propertyName.substring(DRIVER_PROPERTY_PREFIX_LENGTH), value);</span><br><span class="line">      &#125; else if (metaDataSource.hasSetter(propertyName)) &#123;</span><br><span class="line">        String value = (String) properties.get(propertyName);</span><br><span class="line">        Object convertedValue = convertValue(metaDataSource, propertyName, value);</span><br><span class="line">        metaDataSource.setValue(propertyName, convertedValue);</span><br><span class="line">      &#125; else &#123;</span><br><span class="line">        throw new DataSourceException(&quot;Unknown DataSource property: &quot; + propertyName);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    if (driverProperties.size() &gt; 0) &#123;</span><br><span class="line">      metaDataSource.setValue(&quot;driverProperties&quot;, driverProperties);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></p>
+<p>通过setProperties将配置文件中的信息传递给DataSource对象的属性中，再获取连接的时候，会使用这些信息<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">public DataSource getDataSource() &#123;</span><br><span class="line">  return dataSource;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>getDataSource方法返回通过构造方法生成的DataSource对象</p>
+<h3 id="测试UnpooledDataSourceFactory"><a href="#测试UnpooledDataSourceFactory" class="headerlink" title="测试UnpooledDataSourceFactory"></a>测试UnpooledDataSourceFactory</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">public class CustomTest &#123;</span><br><span class="line">    @Test</span><br><span class="line">    public void test() &#123;</span><br><span class="line">        DataSource dataSource = null;</span><br><span class="line">//        dataSource = new UnpooledDataSource(&quot;org.hsqldb.jdbcDriver&quot;, &quot;jdbc:hsqldb:mem:multipledrivers&quot;, &quot;sa&quot;, &quot;&quot;);</span><br><span class="line">        DataSourceFactory dataSourceFactory = new UnpooledDataSourceFactory();</span><br><span class="line">        Properties properties = new Properties();</span><br><span class="line">        properties.setProperty(&quot;driver&quot;, &quot;org.hsqldb.jdbcDriver&quot;);</span><br><span class="line">        properties.setProperty(&quot;url&quot;, &quot;jdbc:hsqldb:mem:multipledrivers&quot;);</span><br><span class="line">        properties.setProperty(&quot;username&quot;, &quot;sa&quot;);</span><br><span class="line">        properties.setProperty(&quot;password&quot;, &quot;&quot;);</span><br><span class="line">        dataSourceFactory.setProperties(properties);</span><br><span class="line">        dataSource = dataSourceFactory.getDataSource();</span><br><span class="line">        try (Connection connection = dataSource.getConnection())&#123;</span><br><span class="line">            testSql(connection);</span><br><span class="line">        &#125; catch (SQLException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    private void testSql(Connection connection) throws SQLException &#123;</span><br><span class="line">        //建表</span><br><span class="line">        PreparedStatement createStatement = connection.prepareStatement(&quot;create table test (id integer not null , name varchar(25) not null )&quot;);</span><br><span class="line">        createStatement.execute();</span><br><span class="line">        createStatement.close();</span><br><span class="line"></span><br><span class="line">        //插入</span><br><span class="line">        PreparedStatement insertStatement = connection.prepareStatement(&quot;insert into test values (?, ?)&quot;);</span><br><span class="line">        insertStatement.setInt(1, 1);</span><br><span class="line">        insertStatement.setString(2, &quot;xiaoming&quot;);</span><br><span class="line">        insertStatement.executeUpdate();</span><br><span class="line">        insertStatement.setInt(1, 2);</span><br><span class="line">        insertStatement.setString(2, &quot;zhangsan&quot;);</span><br><span class="line">        insertStatement.executeUpdate();</span><br><span class="line">        insertStatement.close();</span><br><span class="line"></span><br><span class="line">        //查询</span><br><span class="line">        PreparedStatement queryStatement = connection.prepareStatement(&quot;select id, name from test&quot;);</span><br><span class="line">        ResultSet resultSet = queryStatement.executeQuery();</span><br><span class="line">        while (resultSet.next()) &#123;</span><br><span class="line">            int id = resultSet.getInt(&quot;id&quot;);</span><br><span class="line">            String name = resultSet.getString(&quot;name&quot;);</span><br><span class="line">            System.out.println(&quot;id:&quot; + id + &quot;-&gt;&quot; + &quot;name:&quot; + name);</span><br><span class="line">        &#125;</span><br><span class="line">        resultSet.close();</span><br><span class="line">        queryStatement.close();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>测试结果<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">id:1-&gt;name:xiaoming</span><br><span class="line">id:2-&gt;name:zhangsan</span><br></pre></td></tr></table></figure></p>
+<p>我们可以看到和直接使用jdbc api测试的结果相同（这里只是测试，DataSourceFactory并不需要我们自己创建使用）</p>
+<h2 id="PooledDataSourceFactory"><a href="#PooledDataSourceFactory" class="headerlink" title="PooledDataSourceFactory"></a>PooledDataSourceFactory</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">public class PooledDataSourceFactory extends UnpooledDataSourceFactory &#123;</span><br><span class="line"></span><br><span class="line">  public PooledDataSourceFactory() &#123;</span><br><span class="line">    this.dataSource = new PooledDataSource();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>没有什么好说的，继承自UnpooledDataSourceFactory，唯一的区别就是构造方法中，dataSource被初始化为PooledDataSource类型，此处不单独测试</p>
+<h2 id="JndiDataSourceFactory"><a href="#JndiDataSourceFactory" class="headerlink" title="JndiDataSourceFactory"></a>JndiDataSourceFactory</h2><h3 id="什么是JNDI"><a href="#什么是JNDI" class="headerlink" title="什么是JNDI"></a>什么是JNDI</h3><p>JNDI(Java Naming and Directory Interface,Java命名和目录接口)是SUN公司提供的一种标准的Java命名系统接口，JNDI提供统一的客户端API，通过不同的访问提供者接口JNDI服务供应接口(SPI)的实现，由管理者将JNDI API映射为特定的命名服务和目录系统，使得Java应用程序可以和这些命名服务和目录服务之间进行交互。目录服务是命名服务的一种自然扩展。两者之间的关键差别是目录服务中对象不但可以有名称还可以有属性（例如，用户有email地址），而命名服务中对象没有属性【摘自百度百科】，上面说的比较抽象，可以参考这篇<a href="https://blog.csdn.net/u010430304/article/details/54601302/" target="_blank" rel="noopener">博客</a>(原文没写转自哪里，这里给不了原作者博客链接，很抱歉)</p>
+<h3 id="数据源初始化"><a href="#数据源初始化" class="headerlink" title="数据源初始化"></a>数据源初始化</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">public void setProperties(Properties properties) &#123;</span><br><span class="line">  try &#123;</span><br><span class="line">    InitialContext initCtx;</span><br><span class="line">    Properties env = getEnvProperties(properties);//获取环境配置</span><br><span class="line">    if (env == null) &#123;</span><br><span class="line">      initCtx = new InitialContext();</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">      initCtx = new InitialContext(env);</span><br><span class="line">    &#125;</span><br><span class="line">  </span><br><span class="line">    //查找dataSource</span><br><span class="line">    if (properties.containsKey(INITIAL_CONTEXT)</span><br><span class="line">        &amp;&amp; properties.containsKey(DATA_SOURCE)) &#123;</span><br><span class="line">      Context ctx = (Context) initCtx.lookup(properties.getProperty(INITIAL_CONTEXT));</span><br><span class="line">      dataSource = (DataSource) ctx.lookup(properties.getProperty(DATA_SOURCE));</span><br><span class="line">    &#125; else if (properties.containsKey(DATA_SOURCE)) &#123;</span><br><span class="line">      dataSource = (DataSource) initCtx.lookup(properties.getProperty(DATA_SOURCE));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">  &#125; catch (NamingException e) &#123;</span><br><span class="line">    throw new DataSourceException(&quot;There was an error configuring JndiDataSourceTransactionPool. Cause: &quot; + e, e);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>与其他两种方式不同，通过jndi获取数据源，数据源一般配置在应用服务器上（如tomcat），应用只需要配置好服务目录和数据源名称，通过上述方法，即可获取到应用服务器上配置的数据源<br>获取数据源方法也是直接返回DataSource对象</p>
+<h3 id="测试JndiDataSourceFactory"><a href="#测试JndiDataSourceFactory" class="headerlink" title="测试JndiDataSourceFactory"></a>测试JndiDataSourceFactory</h3><p>我们直接使用Mybatis源码中的测试类JndiDataSourceFactoryTest，简单解释下<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><span class="line">public class JndiDataSourceFactoryTest extends BaseDataTest &#123;</span><br><span class="line"></span><br><span class="line">  private static final String TEST_INITIAL_CONTEXT_FACTORY = MockContextFactory.class.getName();</span><br><span class="line">  private static final String TEST_INITIAL_CONTEXT = &quot;/mypath/path/&quot;;//服务目录</span><br><span class="line">  private static final String TEST_DATA_SOURCE = &quot;myDataSource&quot;;//服务对象名称</span><br><span class="line">  private UnpooledDataSource expectedDataSource;//模拟服务器上的数据源</span><br><span class="line"></span><br><span class="line">  @Before</span><br><span class="line">  public void setup() throws Exception &#123;</span><br><span class="line">    expectedDataSource = createUnpooledDataSource(BLOG_PROPERTIES);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  @Test</span><br><span class="line">  public void shouldRetrieveDataSourceFromJNDI() throws Exception &#123;</span><br><span class="line">    createJndiDataSource();</span><br><span class="line">    JndiDataSourceFactory factory = new JndiDataSourceFactory();</span><br><span class="line">    //以下属性配置需要和服务器一致</span><br><span class="line">    factory.setProperties(new Properties() &#123;</span><br><span class="line">      &#123;</span><br><span class="line">        setProperty(JndiDataSourceFactory.ENV_PREFIX + Context.INITIAL_CONTEXT_FACTORY, TEST_INITIAL_CONTEXT_FACTORY);</span><br><span class="line">        setProperty(JndiDataSourceFactory.INITIAL_CONTEXT, TEST_INITIAL_CONTEXT);</span><br><span class="line">        setProperty(JndiDataSourceFactory.DATA_SOURCE, TEST_DATA_SOURCE);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">    DataSource actualDataSource = factory.getDataSource();</span><br><span class="line">    assertEquals(expectedDataSource, actualDataSource);//测试通过，获取到的数据源就是服务器上的</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  //模拟jndi服务</span><br><span class="line">  private void createJndiDataSource() throws Exception &#123;</span><br><span class="line">    try &#123;</span><br><span class="line">      Hashtable&lt;String, String&gt; env = new Hashtable&lt;String, String&gt;();</span><br><span class="line">      env.put(Context.INITIAL_CONTEXT_FACTORY, TEST_INITIAL_CONTEXT_FACTORY);</span><br><span class="line"></span><br><span class="line">      MockContext ctx = new MockContext(false);</span><br><span class="line">      ctx.bind(TEST_DATA_SOURCE, expectedDataSource);//绑定数据源</span><br><span class="line"></span><br><span class="line">      InitialContext initCtx = new InitialContext(env);</span><br><span class="line">      initCtx.bind(TEST_INITIAL_CONTEXT, ctx);//绑定服务目录</span><br><span class="line">    &#125; catch (NamingException e) &#123;</span><br><span class="line">      throw new DataSourceException(&quot;There was an error configuring JndiDataSourceTransactionPool. Cause: &quot; + e, e);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  public static class MockContextFactory implements InitialContextFactory &#123;</span><br><span class="line">    @Override</span><br><span class="line">    public Context getInitialContext(Hashtable&lt;?, ?&gt; environment) throws NamingException &#123;</span><br><span class="line">      return new MockContext(false);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  public static class MockContext extends InitialContext &#123;</span><br><span class="line">    private static Map&lt;String,Object&gt; bindings = new HashMap&lt;String,Object&gt;();</span><br><span class="line"></span><br><span class="line">    public MockContext(boolean lazy) throws NamingException &#123;</span><br><span class="line">      super(lazy);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Object lookup(String name) throws NamingException &#123;</span><br><span class="line">      return bindings.get(name);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void bind(String name, Object obj) throws NamingException &#123;</span><br><span class="line">      bindings.put(name, obj);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Mybatis/" rel="tag"># Mybatis</a>
+          
+            <a href="/tags/源码分析/" rel="tag"># 源码分析</a>
+          
+            <a href="/tags/DataSource/" rel="tag"># DataSource</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/08/28/akka简介/" rel="next" title="akka简介">
+                <i class="fa fa-chevron-left"></i> akka简介
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zODc5MC8xNTMxOA=="></div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="http://tx.haiqq.com/uploads/allimg/c170727/150111a15b30-331Z.jpg"
+               alt="tank" />
+          <p class="site-author-name" itemprop="name">tank</p>
+           
+              <p class="site-description motion-element" itemprop="description">java js python spring mybatis 架构 微服务 web</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives/">
+                <span class="site-state-item-count">13</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">7</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">15</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#接口定义"><span class="nav-number">1.</span> <span class="nav-text">接口定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#继承关系"><span class="nav-number">2.</span> <span class="nav-text">继承关系</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UnpooledDataSourceFactory"><span class="nav-number">3.</span> <span class="nav-text">UnpooledDataSourceFactory</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#测试UnpooledDataSourceFactory"><span class="nav-number">3.1.</span> <span class="nav-text">测试UnpooledDataSourceFactory</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PooledDataSourceFactory"><span class="nav-number">4.</span> <span class="nav-text">PooledDataSourceFactory</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#JndiDataSourceFactory"><span class="nav-number">5.</span> <span class="nav-text">JndiDataSourceFactory</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#什么是JNDI"><span class="nav-number">5.1.</span> <span class="nav-text">什么是JNDI</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#数据源初始化"><span class="nav-number">5.2.</span> <span class="nav-text">数据源初始化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#测试JndiDataSourceFactory"><span class="nav-number">5.3.</span> <span class="nav-text">测试JndiDataSourceFactory</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">tank</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Gemini
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

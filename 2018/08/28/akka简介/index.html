@@ -84,7 +84,7 @@
 <link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="akka," />
 
 
 
@@ -100,17 +100,18 @@
 
 
 
-<meta name="description" content="java js python spring mybatis 架构 微服务 web">
-<meta name="keywords" content="tank 博客 技术 java js python spring mybatis 架构 微服务 web">
-<meta property="og:type" content="website">
-<meta property="og:title" content="tank的个人博客">
-<meta property="og:url" content="http://tcwloy.github.io/categories/数据结构与算法/index.html">
+<meta name="description" content="本文翻译自akka官网 Akka简介待补充">
+<meta name="keywords" content="akka">
+<meta property="og:type" content="article">
+<meta property="og:title" content="akka简介">
+<meta property="og:url" content="http://tcwloy.github.io/2018/08/28/akka简介/index.html">
 <meta property="og:site_name" content="tank的个人博客">
-<meta property="og:description" content="java js python spring mybatis 架构 微服务 web">
+<meta property="og:description" content="本文翻译自akka官网 Akka简介待补充">
 <meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-08-29T08:17:56.623Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="tank的个人博客">
-<meta name="twitter:description" content="java js python spring mybatis 架构 微服务 web">
+<meta name="twitter:title" content="akka简介">
+<meta name="twitter:description" content="本文翻译自akka官网 Akka简介待补充">
 
 
 
@@ -139,13 +140,13 @@
 
 
 
-  <link rel="canonical" href="http://tcwloy.github.io/categories/数据结构与算法/"/>
+  <link rel="canonical" href="http://tcwloy.github.io/2018/08/28/akka简介/"/>
 
 
 
 
 
-  <title>分类: 数据结构与算法 | tank的个人博客</title>
+  <title>akka简介 | tank的个人博客</title>
   
 
 
@@ -180,7 +181,7 @@
     
   
 
-  <div class="container sidebar-position-left  ">
+  <div class="container sidebar-position-left page-post-detail ">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -294,55 +295,174 @@
           <div id="content" class="content">
             
 
-  
-  
-  
-  <div class="post-block category">
+  <div id="posts" class="posts-expand">
+    
 
-    <div id="posts" class="posts-collapse">
-      <div class="collection-title">
-        <h1>数据结构与算法<small>分类</small>
-        </h1>
-      </div>
+  
 
-      
-        
+  
+  
+  
 
   <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://tcwloy.github.io/2018/08/28/akka简介/">
 
-      <h2 class="post-title">
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="tank">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://tx.haiqq.com/uploads/allimg/c170727/150111a15b30-331Z.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="tank的个人博客">
+    </span>
+
+    
+      <header class="post-header">
+
         
-            <a class="post-title-link" href="/2018/08/14/重拾数据结构与算法-综述/" itemprop="url">
-              
-                <span itemprop="name">重拾数据结构与算法-综述</span>
-              
-            </a>
         
-      </h2>
+          <h1 class="post-title" itemprop="name headline">akka简介</h1>
+        
 
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2018-08-14T17:19:59+08:00"
-              content="2018-08-14" >
-          08-14
-        </time>
-      </div>
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-08-28T17:08:33+08:00">
+                2018-08-28
+              </time>
+            
 
-    </header>
-  </article>
+            
 
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/akka/" itemprop="url" rel="index">
+                    <span itemprop="name">akka</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>本文翻译自<a href="https://doc.akka.io/docs/akka/current/guide/introduction.html" target="_blank" rel="noopener">akka官网</a></p>
+<h2 id="Akka简介"><a href="#Akka简介" class="headerlink" title="Akka简介"></a>Akka简介</h2><p>待补充</p>
 
       
     </div>
+    
+    
+    
 
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/akka/" rel="tag"># akka</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/08/25/Mytais源码分析之DataSource-PooledDataSource/" rel="next" title="Mytais源码分析之DataSource PooledDataSource">
+                <i class="fa fa-chevron-left"></i> Mytais源码分析之DataSource PooledDataSource
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/08/29/Mytais源码分析之DataSource-DataSourceFactory/" rel="prev" title="Mytais源码分析之DataSource DataSourceFactory">
+                Mytais源码分析之DataSource DataSourceFactory <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
   </div>
   
   
   
+  </article>
 
-  
 
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
 
 
           </div>
@@ -350,6 +470,12 @@
 
 
           
+  <div class="comments" id="comments">
+    
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zODc5MC8xNTMxOA=="></div>
+    
+  </div>
+
 
         </div>
         
@@ -370,8 +496,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview sidebar-panel sidebar-panel-active">
+      <section class="site-overview sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="http://tx.haiqq.com/uploads/allimg/c170727/150111a15b30-331Z.jpg"
@@ -433,6 +568,22 @@
 
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Akka简介"><span class="nav-number">1.</span> <span class="nav-text">Akka简介</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
@@ -553,10 +704,10 @@
 
 
   
-    <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
 <script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
 
-  
+
 
   
 
@@ -585,6 +736,17 @@
 
 
 
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
   
 
 

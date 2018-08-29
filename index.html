@@ -310,6 +310,306 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://tcwloy.github.io/2018/08/29/Mytais源码分析之DataSource-DataSourceFactory/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="tank">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://tx.haiqq.com/uploads/allimg/c170727/150111a15b30-331Z.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="tank的个人博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/08/29/Mytais源码分析之DataSource-DataSourceFactory/" itemprop="url">Mytais源码分析之DataSource DataSourceFactory</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-08-29T16:19:41+08:00">
+                2018-08-29
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Mybatis/" itemprop="url" rel="index">
+                    <span itemprop="name">Mybatis</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="接口定义"><a href="#接口定义" class="headerlink" title="接口定义"></a>接口定义</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">public interface DataSourceFactory &#123;</span><br><span class="line"></span><br><span class="line">  void setProperties(Properties props);</span><br><span class="line"></span><br><span class="line">  DataSource getDataSource();</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接口主要包括两个方法：setProperties用于设置数据库的连接属性及数据源所需要的配置信息，getDataSource用于返回数据源信息，通过数据源即可获取相应的数据库连接</p>
+<h2 id="继承关系"><a href="#继承关系" class="headerlink" title="继承关系"></a>继承关系</h2><img src="/2018/08/29/Mytais源码分析之DataSource-DataSourceFactory/DataSourceFactory.png" title="DataSourceFactory">
+<h2 id="UnpooledDataSourceFactory"><a href="#UnpooledDataSourceFactory" class="headerlink" title="UnpooledDataSourceFactory"></a>UnpooledDataSourceFactory</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">public UnpooledDataSourceFactory() &#123;</span><br><span class="line">  this.dataSource = new UnpooledDataSource();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>构造方法直接生成UnpooledDataSource对象。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">`public void setProperties(Properties properties) &#123;</span><br><span class="line">    Properties driverProperties = new Properties();</span><br><span class="line">    MetaObject metaDataSource = SystemMetaObject.forObject(dataSource);//获取datasource元信息，MetaObject后面单独分析，此处暂时理解为类似于反射</span><br><span class="line">    for (Object key : properties.keySet()) &#123;//通过循环，给datasource的属性设置配置中的信息</span><br><span class="line">      String propertyName = (String) key;</span><br><span class="line">      if (propertyName.startsWith(DRIVER_PROPERTY_PREFIX)) &#123;</span><br><span class="line">        String value = properties.getProperty(propertyName);</span><br><span class="line">        driverProperties.setProperty(propertyName.substring(DRIVER_PROPERTY_PREFIX_LENGTH), value);</span><br><span class="line">      &#125; else if (metaDataSource.hasSetter(propertyName)) &#123;</span><br><span class="line">        String value = (String) properties.get(propertyName);</span><br><span class="line">        Object convertedValue = convertValue(metaDataSource, propertyName, value);</span><br><span class="line">        metaDataSource.setValue(propertyName, convertedValue);</span><br><span class="line">      &#125; else &#123;</span><br><span class="line">        throw new DataSourceException(&quot;Unknown DataSource property: &quot; + propertyName);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    if (driverProperties.size() &gt; 0) &#123;</span><br><span class="line">      metaDataSource.setValue(&quot;driverProperties&quot;, driverProperties);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></p>
+<p>通过setProperties将配置文件中的信息传递给DataSource对象的属性中，再获取连接的时候，会使用这些信息<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">public DataSource getDataSource() &#123;</span><br><span class="line">  return dataSource;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>getDataSource方法返回通过构造方法生成的DataSource对象</p>
+<h3 id="测试UnpooledDataSourceFactory"><a href="#测试UnpooledDataSourceFactory" class="headerlink" title="测试UnpooledDataSourceFactory"></a>测试UnpooledDataSourceFactory</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">public class CustomTest &#123;</span><br><span class="line">    @Test</span><br><span class="line">    public void test() &#123;</span><br><span class="line">        DataSource dataSource = null;</span><br><span class="line">//        dataSource = new UnpooledDataSource(&quot;org.hsqldb.jdbcDriver&quot;, &quot;jdbc:hsqldb:mem:multipledrivers&quot;, &quot;sa&quot;, &quot;&quot;);</span><br><span class="line">        DataSourceFactory dataSourceFactory = new UnpooledDataSourceFactory();</span><br><span class="line">        Properties properties = new Properties();</span><br><span class="line">        properties.setProperty(&quot;driver&quot;, &quot;org.hsqldb.jdbcDriver&quot;);</span><br><span class="line">        properties.setProperty(&quot;url&quot;, &quot;jdbc:hsqldb:mem:multipledrivers&quot;);</span><br><span class="line">        properties.setProperty(&quot;username&quot;, &quot;sa&quot;);</span><br><span class="line">        properties.setProperty(&quot;password&quot;, &quot;&quot;);</span><br><span class="line">        dataSourceFactory.setProperties(properties);</span><br><span class="line">        dataSource = dataSourceFactory.getDataSource();</span><br><span class="line">        try (Connection connection = dataSource.getConnection())&#123;</span><br><span class="line">            testSql(connection);</span><br><span class="line">        &#125; catch (SQLException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    private void testSql(Connection connection) throws SQLException &#123;</span><br><span class="line">        //建表</span><br><span class="line">        PreparedStatement createStatement = connection.prepareStatement(&quot;create table test (id integer not null , name varchar(25) not null )&quot;);</span><br><span class="line">        createStatement.execute();</span><br><span class="line">        createStatement.close();</span><br><span class="line"></span><br><span class="line">        //插入</span><br><span class="line">        PreparedStatement insertStatement = connection.prepareStatement(&quot;insert into test values (?, ?)&quot;);</span><br><span class="line">        insertStatement.setInt(1, 1);</span><br><span class="line">        insertStatement.setString(2, &quot;xiaoming&quot;);</span><br><span class="line">        insertStatement.executeUpdate();</span><br><span class="line">        insertStatement.setInt(1, 2);</span><br><span class="line">        insertStatement.setString(2, &quot;zhangsan&quot;);</span><br><span class="line">        insertStatement.executeUpdate();</span><br><span class="line">        insertStatement.close();</span><br><span class="line"></span><br><span class="line">        //查询</span><br><span class="line">        PreparedStatement queryStatement = connection.prepareStatement(&quot;select id, name from test&quot;);</span><br><span class="line">        ResultSet resultSet = queryStatement.executeQuery();</span><br><span class="line">        while (resultSet.next()) &#123;</span><br><span class="line">            int id = resultSet.getInt(&quot;id&quot;);</span><br><span class="line">            String name = resultSet.getString(&quot;name&quot;);</span><br><span class="line">            System.out.println(&quot;id:&quot; + id + &quot;-&gt;&quot; + &quot;name:&quot; + name);</span><br><span class="line">        &#125;</span><br><span class="line">        resultSet.close();</span><br><span class="line">        queryStatement.close();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>测试结果<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">id:1-&gt;name:xiaoming</span><br><span class="line">id:2-&gt;name:zhangsan</span><br></pre></td></tr></table></figure></p>
+<p>我们可以看到和直接使用jdbc api测试的结果相同（这里只是测试，DataSourceFactory并不需要我们自己创建使用）</p>
+<h2 id="PooledDataSourceFactory"><a href="#PooledDataSourceFactory" class="headerlink" title="PooledDataSourceFactory"></a>PooledDataSourceFactory</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">public class PooledDataSourceFactory extends UnpooledDataSourceFactory &#123;</span><br><span class="line"></span><br><span class="line">  public PooledDataSourceFactory() &#123;</span><br><span class="line">    this.dataSource = new PooledDataSource();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>没有什么好说的，继承自UnpooledDataSourceFactory，唯一的区别就是构造方法中，dataSource被初始化为PooledDataSource类型，此处不单独测试</p>
+<h2 id="JndiDataSourceFactory"><a href="#JndiDataSourceFactory" class="headerlink" title="JndiDataSourceFactory"></a>JndiDataSourceFactory</h2><h3 id="什么是JNDI"><a href="#什么是JNDI" class="headerlink" title="什么是JNDI"></a>什么是JNDI</h3><p>JNDI(Java Naming and Directory Interface,Java命名和目录接口)是SUN公司提供的一种标准的Java命名系统接口，JNDI提供统一的客户端API，通过不同的访问提供者接口JNDI服务供应接口(SPI)的实现，由管理者将JNDI API映射为特定的命名服务和目录系统，使得Java应用程序可以和这些命名服务和目录服务之间进行交互。目录服务是命名服务的一种自然扩展。两者之间的关键差别是目录服务中对象不但可以有名称还可以有属性（例如，用户有email地址），而命名服务中对象没有属性【摘自百度百科】，上面说的比较抽象，可以参考这篇<a href="https://blog.csdn.net/u010430304/article/details/54601302/" target="_blank" rel="noopener">博客</a>(原文没写转自哪里，这里给不了原作者博客链接，很抱歉)</p>
+<h3 id="数据源初始化"><a href="#数据源初始化" class="headerlink" title="数据源初始化"></a>数据源初始化</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">public void setProperties(Properties properties) &#123;</span><br><span class="line">  try &#123;</span><br><span class="line">    InitialContext initCtx;</span><br><span class="line">    Properties env = getEnvProperties(properties);//获取环境配置</span><br><span class="line">    if (env == null) &#123;</span><br><span class="line">      initCtx = new InitialContext();</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">      initCtx = new InitialContext(env);</span><br><span class="line">    &#125;</span><br><span class="line">  </span><br><span class="line">    //查找dataSource</span><br><span class="line">    if (properties.containsKey(INITIAL_CONTEXT)</span><br><span class="line">        &amp;&amp; properties.containsKey(DATA_SOURCE)) &#123;</span><br><span class="line">      Context ctx = (Context) initCtx.lookup(properties.getProperty(INITIAL_CONTEXT));</span><br><span class="line">      dataSource = (DataSource) ctx.lookup(properties.getProperty(DATA_SOURCE));</span><br><span class="line">    &#125; else if (properties.containsKey(DATA_SOURCE)) &#123;</span><br><span class="line">      dataSource = (DataSource) initCtx.lookup(properties.getProperty(DATA_SOURCE));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">  &#125; catch (NamingException e) &#123;</span><br><span class="line">    throw new DataSourceException(&quot;There was an error configuring JndiDataSourceTransactionPool. Cause: &quot; + e, e);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>与其他两种方式不同，通过jndi获取数据源，数据源一般配置在应用服务器上（如tomcat），应用只需要配置好服务目录和数据源名称，通过上述方法，即可获取到应用服务器上配置的数据源<br>获取数据源方法也是直接返回DataSource对象</p>
+<h3 id="测试JndiDataSourceFactory"><a href="#测试JndiDataSourceFactory" class="headerlink" title="测试JndiDataSourceFactory"></a>测试JndiDataSourceFactory</h3><p>我们直接使用Mybatis源码中的测试类JndiDataSourceFactoryTest，简单解释下<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><span class="line">public class JndiDataSourceFactoryTest extends BaseDataTest &#123;</span><br><span class="line"></span><br><span class="line">  private static final String TEST_INITIAL_CONTEXT_FACTORY = MockContextFactory.class.getName();</span><br><span class="line">  private static final String TEST_INITIAL_CONTEXT = &quot;/mypath/path/&quot;;//服务目录</span><br><span class="line">  private static final String TEST_DATA_SOURCE = &quot;myDataSource&quot;;//服务对象名称</span><br><span class="line">  private UnpooledDataSource expectedDataSource;//模拟服务器上的数据源</span><br><span class="line"></span><br><span class="line">  @Before</span><br><span class="line">  public void setup() throws Exception &#123;</span><br><span class="line">    expectedDataSource = createUnpooledDataSource(BLOG_PROPERTIES);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  @Test</span><br><span class="line">  public void shouldRetrieveDataSourceFromJNDI() throws Exception &#123;</span><br><span class="line">    createJndiDataSource();</span><br><span class="line">    JndiDataSourceFactory factory = new JndiDataSourceFactory();</span><br><span class="line">    //以下属性配置需要和服务器一致</span><br><span class="line">    factory.setProperties(new Properties() &#123;</span><br><span class="line">      &#123;</span><br><span class="line">        setProperty(JndiDataSourceFactory.ENV_PREFIX + Context.INITIAL_CONTEXT_FACTORY, TEST_INITIAL_CONTEXT_FACTORY);</span><br><span class="line">        setProperty(JndiDataSourceFactory.INITIAL_CONTEXT, TEST_INITIAL_CONTEXT);</span><br><span class="line">        setProperty(JndiDataSourceFactory.DATA_SOURCE, TEST_DATA_SOURCE);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">    DataSource actualDataSource = factory.getDataSource();</span><br><span class="line">    assertEquals(expectedDataSource, actualDataSource);//测试通过，获取到的数据源就是服务器上的</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  //模拟jndi服务</span><br><span class="line">  private void createJndiDataSource() throws Exception &#123;</span><br><span class="line">    try &#123;</span><br><span class="line">      Hashtable&lt;String, String&gt; env = new Hashtable&lt;String, String&gt;();</span><br><span class="line">      env.put(Context.INITIAL_CONTEXT_FACTORY, TEST_INITIAL_CONTEXT_FACTORY);</span><br><span class="line"></span><br><span class="line">      MockContext ctx = new MockContext(false);</span><br><span class="line">      ctx.bind(TEST_DATA_SOURCE, expectedDataSource);//绑定数据源</span><br><span class="line"></span><br><span class="line">      InitialContext initCtx = new InitialContext(env);</span><br><span class="line">      initCtx.bind(TEST_INITIAL_CONTEXT, ctx);//绑定服务目录</span><br><span class="line">    &#125; catch (NamingException e) &#123;</span><br><span class="line">      throw new DataSourceException(&quot;There was an error configuring JndiDataSourceTransactionPool. Cause: &quot; + e, e);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  public static class MockContextFactory implements InitialContextFactory &#123;</span><br><span class="line">    @Override</span><br><span class="line">    public Context getInitialContext(Hashtable&lt;?, ?&gt; environment) throws NamingException &#123;</span><br><span class="line">      return new MockContext(false);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  public static class MockContext extends InitialContext &#123;</span><br><span class="line">    private static Map&lt;String,Object&gt; bindings = new HashMap&lt;String,Object&gt;();</span><br><span class="line"></span><br><span class="line">    public MockContext(boolean lazy) throws NamingException &#123;</span><br><span class="line">      super(lazy);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Object lookup(String name) throws NamingException &#123;</span><br><span class="line">      return bindings.get(name);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void bind(String name, Object obj) throws NamingException &#123;</span><br><span class="line">      bindings.put(name, obj);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://tcwloy.github.io/2018/08/28/akka简介/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="tank">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://tx.haiqq.com/uploads/allimg/c170727/150111a15b30-331Z.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="tank的个人博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/08/28/akka简介/" itemprop="url">akka简介</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-08-28T17:08:33+08:00">
+                2018-08-28
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/akka/" itemprop="url" rel="index">
+                    <span itemprop="name">akka</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>本文翻译自<a href="https://doc.akka.io/docs/akka/current/guide/introduction.html" target="_blank" rel="noopener">akka官网</a></p>
+<h2 id="Akka简介"><a href="#Akka简介" class="headerlink" title="Akka简介"></a>Akka简介</h2><p>待补充</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://tcwloy.github.io/2018/08/25/Mytais源码分析之DataSource-PooledDataSource/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -404,10 +704,16 @@
         
           
             <h2 id="Mybatis-DataSource"><a href="#Mybatis-DataSource" class="headerlink" title="Mybatis-DataSource"></a>Mybatis-DataSource</h2><p>接<a href="https://tcwloy.github.io/2018/08/24/Mytais%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8BDataSource-UnPooledDataSource/">上一篇</a>，继续学习下PooledDataSource</p>
-<h3 id="PooledDataSource"><a href="#PooledDataSource" class="headerlink" title="PooledDataSource"></a>PooledDataSource</h3><p>PooledDataSource使用了池化技术，实现就要比UnpooledDataSource复杂多了，耐着性子继续看。所有的DataSource实现类都一样，有这共同的对外门户getConnection<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">public Connection getConnection() throws SQLException &#123;</span><br><span class="line">  return popConnection(dataSource.getUsername(), dataSource.getPassword()).getProxyConnection();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">@Override</span><br><span class="line">public Connection getConnection(String username, String password) throws SQLException &#123;</span><br><span class="line">  return popConnection(username, password).getProxyConnection();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="PooledDataSource"><a href="#PooledDataSource" class="headerlink" title="PooledDataSource"></a>PooledDataSource</h2><p>PooledDataSource使用了池化技术，实现就要比UnpooledDataSource复杂多了，耐着性子继续看。所有的DataSource实现类都一样，有这共同的对外门户getConnection</p>
+<h3 id="获取连接getConnection"><a href="#获取连接getConnection" class="headerlink" title="获取连接getConnection"></a>获取连接getConnection</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">public Connection getConnection() throws SQLException &#123;</span><br><span class="line">  return popConnection(dataSource.getUsername(), dataSource.getPassword()).getProxyConnection();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">@Override</span><br><span class="line">public Connection getConnection(String username, String password) throws SQLException &#123;</span><br><span class="line">  return popConnection(username, password).getProxyConnection();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>现在，我们的目光又被popConnection吸引走了，第一印象，好长啊<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br></pre></td><td class="code"><pre><span class="line">private PooledConnection popConnection(String username, String password) throws SQLException &#123;</span><br><span class="line">  boolean countedWait = false;</span><br><span class="line">  PooledConnection conn = null;</span><br><span class="line">  long t = System.currentTimeMillis();</span><br><span class="line">  int localBadConnectionCount = 0;</span><br><span class="line"></span><br><span class="line">  while (conn == null) &#123;</span><br><span class="line">    synchronized (state) &#123;//锁住state</span><br><span class="line">      if (!state.idleConnections.isEmpty()) &#123;//判断是否有空闲连接</span><br><span class="line">        // Pool has available connection</span><br><span class="line">        conn = state.idleConnections.remove(0);//取第0位的空闲连接</span><br><span class="line">        if (log.isDebugEnabled()) &#123;</span><br><span class="line">          log.debug(&quot;Checked out connection &quot; + conn.getRealHashCode() + &quot; from pool.&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125; else &#123;//如果没有空闲连接</span><br><span class="line">        // Pool does not have available connection</span><br><span class="line">        if (state.activeConnections.size() &lt; poolMaximumActiveConnections) &#123;//判断活跃连接数是否小于允许最大值</span><br><span class="line">          // Can create new connection</span><br><span class="line">          conn = new PooledConnection(dataSource.getConnection(), this);//如果是，创建新的连接</span><br><span class="line">          if (log.isDebugEnabled()) &#123;</span><br><span class="line">            log.debug(&quot;Created connection &quot; + conn.getRealHashCode() + &quot;.&quot;);</span><br><span class="line">          &#125;</span><br><span class="line">        &#125; else &#123;//既没有空闲连接，又达到活跃连接上限，不能创建新的连接</span><br><span class="line">          // Cannot create new connection</span><br><span class="line">          PooledConnection oldestActiveConnection = state.activeConnections.get(0);</span><br><span class="line">          long longestCheckoutTime = oldestActiveConnection.getCheckoutTime();</span><br><span class="line">          //当达到最大活动链接数时，此时如果有程序获取连接，则检查最先使用的连接，看其是否超出了该时间，如果超出了该时间，则可以回收该连接。（默认20s）</span><br><span class="line">          if (longestCheckoutTime &gt; poolMaximumCheckoutTime) &#123;</span><br><span class="line">            // Can claim overdue connection</span><br><span class="line">            state.claimedOverdueConnectionCount++;//标记需要过期的连接数+1，计算平均值时使用</span><br><span class="line">            state.accumulatedCheckoutTimeOfOverdueConnections += longestCheckoutTime;//累积过期连接检出时间只和，计算平均值时使用</span><br><span class="line">            state.accumulatedCheckoutTime += longestCheckoutTime;//累积检出时间之和，计算平均值时使用</span><br><span class="line">            state.activeConnections.remove(oldestActiveConnection);//从激活列表中移除该连接</span><br><span class="line">            if (!oldestActiveConnection.getRealConnection().getAutoCommit()) &#123;</span><br><span class="line">              try &#123;</span><br><span class="line">                oldestActiveConnection.getRealConnection().rollback();//因为连接过期，所以如果连接没有设置自动提交，则回滚</span><br><span class="line">              &#125; catch (SQLException e) &#123;</span><br><span class="line">                /*</span><br><span class="line">                   Just log a message for debug and continue to execute the following</span><br><span class="line">                   statement like nothing happened.</span><br><span class="line">                   Wrap the bad connection with a new PooledConnection, this will help</span><br><span class="line">                   to not interrupt current executing thread and give current thread a</span><br><span class="line">                   chance to join the next competition for another valid/good database</span><br><span class="line">                   connection. At the end of this loop, bad &#123;@link @conn&#125; will be set as null.</span><br><span class="line">                 */</span><br><span class="line">                log.debug(&quot;Bad connection. Could not roll back&quot;);</span><br><span class="line">              &#125;  </span><br><span class="line">            &#125;</span><br><span class="line">            //新建连接，并将旧的连接设置为非法</span><br><span class="line">            conn = new PooledConnection(oldestActiveConnection.getRealConnection(), this);</span><br><span class="line">            conn.setCreatedTimestamp(oldestActiveConnection.getCreatedTimestamp());</span><br><span class="line">            conn.setLastUsedTimestamp(oldestActiveConnection.getLastUsedTimestamp());</span><br><span class="line">            oldestActiveConnection.invalidate();</span><br><span class="line">            if (log.isDebugEnabled()) &#123;</span><br><span class="line">              log.debug(&quot;Claimed overdue connection &quot; + conn.getRealHashCode() + &quot;.&quot;);</span><br><span class="line">            &#125;</span><br><span class="line">          &#125; else &#123;</span><br><span class="line">            // Must wait</span><br><span class="line">            try &#123;                </span><br><span class="line">              if (!countedWait) &#123;</span><br><span class="line">                state.hadToWaitCount++;</span><br><span class="line">                countedWait = true;</span><br><span class="line">              &#125;</span><br><span class="line">              if (log.isDebugEnabled()) &#123;</span><br><span class="line">                log.debug(&quot;Waiting as long as &quot; + poolTimeToWait + &quot; milliseconds for connection.&quot;);</span><br><span class="line">              &#125;</span><br><span class="line">              long wt = System.currentTimeMillis();</span><br><span class="line">              //活跃连接均未超时，则等待</span><br><span class="line">              state.wait(poolTimeToWait);</span><br><span class="line">              state.accumulatedWaitTime += System.currentTimeMillis() - wt;</span><br><span class="line">            &#125; catch (InterruptedException e) &#123;</span><br><span class="line">              break;</span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      if (conn != null) &#123;</span><br><span class="line">        // ping to server and check the connection is valid or not</span><br><span class="line">        if (conn.isValid()) &#123;//获取到连接后，检查连接是否合法，pingConnect是否正常</span><br><span class="line">          if (!conn.getRealConnection().getAutoCommit()) &#123;//如果连接没有设置自动提交，先回滚，避免本次错误提交上次未提交过的内容</span><br><span class="line">            conn.getRealConnection().rollback();</span><br><span class="line">          &#125;</span><br><span class="line">          //assembleConnectionTypeCode返回一个参数拼接字符串的hash</span><br><span class="line">          conn.setConnectionTypeCode(assembleConnectionTypeCode(dataSource.getUrl(), username, password));</span><br><span class="line">          conn.setCheckoutTimestamp(System.currentTimeMillis());</span><br><span class="line">          conn.setLastUsedTimestamp(System.currentTimeMillis());</span><br><span class="line">          state.activeConnections.add(conn);//加入到活跃连接列表中</span><br><span class="line">          state.requestCount++;</span><br><span class="line">          state.accumulatedRequestTime += System.currentTimeMillis() - t;</span><br><span class="line">        &#125; else &#123;//针对连接非法的操作</span><br><span class="line">          if (log.isDebugEnabled()) &#123;</span><br><span class="line">            log.debug(&quot;A bad connection (&quot; + conn.getRealHashCode() + &quot;) was returned from the pool, getting another connection.&quot;);</span><br><span class="line">          &#125;</span><br><span class="line">          state.badConnectionCount++;</span><br><span class="line">          localBadConnectionCount++;</span><br><span class="line">          conn = null;</span><br><span class="line">          if (localBadConnectionCount &gt; (poolMaximumIdleConnections + poolMaximumLocalBadConnectionTolerance)) &#123;</span><br><span class="line">            if (log.isDebugEnabled()) &#123;</span><br><span class="line">              log.debug(&quot;PooledDataSource: Could not get a good connection to the database.&quot;);</span><br><span class="line">            &#125;</span><br><span class="line">            throw new SQLException(&quot;PooledDataSource: Could not get a good connection to the database.&quot;);</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  if (conn == null) &#123;//未获取到连接则抛出异常信息</span><br><span class="line">    if (log.isDebugEnabled()) &#123;</span><br><span class="line">      log.debug(&quot;PooledDataSource: Unknown severe error condition.  The connection pool returned a null connection.&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">    throw new SQLException(&quot;PooledDataSource: Unknown severe error condition.  The connection pool returned a null connection.&quot;);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  return conn;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <p>上述代码中的state变量到底是什么东西呢？<code>private final PoolState state = new PoolState(this);</code>他是PooledDataSource类的一个属性（PoolState类对象），PoolState–看名字就知道，它是用来描述连接池状态的,类中多是一些连接池状态属性的定义<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">public class PoolState &#123;</span><br><span class="line"></span><br><span class="line">  protected PooledDataSource dataSource;//持有所描述的连接池对象</span><br><span class="line"></span><br><span class="line">  protected final List&lt;PooledConnection&gt; idleConnections = new ArrayList&lt;&gt;();//空闲连接</span><br><span class="line">  protected final List&lt;PooledConnection&gt; activeConnections = new ArrayList&lt;&gt;();//活跃连接</span><br><span class="line">  protected long requestCount = 0;//请求数量，上面代码中每次请求到合法连接，该值都会+1</span><br><span class="line">  protected long accumulatedRequestTime = 0;//请求获得连接所花费时间</span><br><span class="line">  protected long accumulatedCheckoutTime = 0;//连接使用总时间</span><br><span class="line">  protected long claimedOverdueConnectionCount = 0;//过期回收连接数</span><br><span class="line">  protected long accumulatedCheckoutTimeOfOverdueConnections = 0;//统计连接过期总的时间</span><br><span class="line">  protected long accumulatedWaitTime = 0;//统计获取连接需要等待的时间</span><br><span class="line">  protected long hadToWaitCount = 0;//统计等待次数</span><br><span class="line">  protected long badConnectionCount = 0;//统计无效连接个数</span><br><span class="line"></span><br><span class="line">  public PoolState(PooledDataSource dataSource) &#123;</span><br><span class="line">    this.dataSource = dataSource;</span><br><span class="line">  &#125;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<h4 id="获取连接流程"><a href="#获取连接流程" class="headerlink" title="获取连接流程"></a>获取连接流程</h4><p>以上就是从PooledDataSource中获取数据库连接的过程，我们画个图来总结一下<br><img src="/2018/08/25/Mytais源码分析之DataSource-PooledDataSource/popConnection.svg" title="popConnection流程"></p>
+<h4 id="获取连接流程"><a href="#获取连接流程" class="headerlink" title="获取连接流程"></a>获取连接流程</h4><p>以上就是从PooledDataSource中获取数据库连接的过程，我们画个图来总结一下<br><img src="/2018/08/25/Mytais源码分析之DataSource-PooledDataSource/popConnection.svg" title="popConnection流程"><br>回头再看看<code>getConnection</code>方法<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">public Connection getConnection() throws SQLException &#123;</span><br><span class="line">  return popConnection(dataSource.getUsername(), dataSource.getPassword()).getProxyConnection();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>仔细观察，会发现<code>getProxyConnection</code>这里返回的是一个代理连接对象，这个代理对象是在创建PooledConnection时初始化的<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">public PooledConnection(Connection connection, PooledDataSource dataSource) &#123;</span><br><span class="line">  this.hashCode = connection.hashCode();</span><br><span class="line">  this.realConnection = connection;</span><br><span class="line">  this.dataSource = dataSource;</span><br><span class="line">  this.createdTimestamp = System.currentTimeMillis();</span><br><span class="line">  this.lastUsedTimestamp = System.currentTimeMillis();</span><br><span class="line">  this.valid = true;</span><br><span class="line">  this.proxyConnection = (Connection) Proxy.newProxyInstance(Connection.class.getClassLoader(), IFACES, this);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>为什么要返回代理对象呢？其实主要是因为，如果返回的是实际的连接对象，使用完连接后调用close方法，就会将连接直接关闭，无法释放回连接池。每次获取新连接的时候，池中都是空的，这样完全没有达到预期的目的（连接复用）。通过代理对象，当我们在调用close方法时，我们不关闭真实连接，而是将连接重新放入空闲列表中<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">public Object invoke(Object proxy, Method method, Object[] args) throws Throwable &#123;</span><br><span class="line">  String methodName = method.getName();</span><br><span class="line">  if (CLOSE.hashCode() == methodName.hashCode() &amp;&amp; CLOSE.equals(methodName)) &#123;//如果调用的是关闭连接方法</span><br><span class="line">    dataSource.pushConnection(this);</span><br><span class="line">    return null;</span><br><span class="line">  &#125; else &#123;</span><br><span class="line">    try &#123;</span><br><span class="line">      if (!Object.class.equals(method.getDeclaringClass())) &#123;</span><br><span class="line">        // issue #579 toString() should never fail</span><br><span class="line">        // throw an SQLException instead of a Runtime</span><br><span class="line">        checkConnection();</span><br><span class="line">      &#125;</span><br><span class="line">      return method.invoke(realConnection, args);</span><br><span class="line">    &#125; catch (Throwable t) &#123;</span><br><span class="line">      throw ExceptionUtil.unwrapThrowable(t);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这里，我们引出了PooledDataSource的<code>pushConnection</code>方法</p>
+<h3 id="释放连接pushConnection"><a href="#释放连接pushConnection" class="headerlink" title="释放连接pushConnection"></a>释放连接pushConnection</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line">protected void pushConnection(PooledConnection conn) throws SQLException &#123;</span><br><span class="line">  //锁定连接池状态</span><br><span class="line">  synchronized (state) &#123;</span><br><span class="line">    state.activeConnections.remove(conn);//从激活连接列表中去除释放的连接</span><br><span class="line">    if (conn.isValid()) &#123;//如果连接合法</span><br><span class="line">      //空闲连接数少于最大空闲连接数，并且是指定数据源的连接（ConnectionTypeCode是根据url、用户名密码生成的）</span><br><span class="line">      if (state.idleConnections.size() &lt; poolMaximumIdleConnections &amp;&amp; conn.getConnectionTypeCode() == expectedConnectionTypeCode) &#123;</span><br><span class="line">        state.accumulatedCheckoutTime += conn.getCheckoutTime();//统计连接使用时长</span><br><span class="line">        if (!conn.getRealConnection().getAutoCommit()) &#123;</span><br><span class="line">          conn.getRealConnection().rollback();</span><br><span class="line">        &#125;</span><br><span class="line">        //新建PooledConnection连接（RealConnection并未关闭）</span><br><span class="line">        PooledConnection newConn = new PooledConnection(conn.getRealConnection(), this);</span><br><span class="line">        state.idleConnections.add(newConn);//添加到空闲列表</span><br><span class="line">        newConn.setCreatedTimestamp(conn.getCreatedTimestamp());</span><br><span class="line">        newConn.setLastUsedTimestamp(conn.getLastUsedTimestamp());</span><br><span class="line">        conn.invalidate();//原始连接失效</span><br><span class="line">        if (log.isDebugEnabled()) &#123;</span><br><span class="line">          log.debug(&quot;Returned connection &quot; + newConn.getRealHashCode() + &quot; to pool.&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">        state.notifyAll();//有了空闲连接之后，通知等待连接的线程</span><br><span class="line">      &#125; else &#123;</span><br><span class="line">        //或空闲连接数大于等于最大空闲连接数，或不是指定数据源的连接（ConnectionTypeCode是根据url、用户名密码生成的）</span><br><span class="line">        state.accumulatedCheckoutTime += conn.getCheckoutTime();</span><br><span class="line">        if (!conn.getRealConnection().getAutoCommit()) &#123;</span><br><span class="line">          conn.getRealConnection().rollback();</span><br><span class="line">        &#125;</span><br><span class="line">        conn.getRealConnection().close();//释放数据库连接</span><br><span class="line">        if (log.isDebugEnabled()) &#123;</span><br><span class="line">          log.debug(&quot;Closed connection &quot; + conn.getRealHashCode() + &quot;.&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">        conn.invalidate();//原始连接失效</span><br><span class="line">      &#125;</span><br><span class="line">    &#125; else &#123;//如果连接不合法，badConnectionCount统计加1</span><br><span class="line">      if (log.isDebugEnabled()) &#123;</span><br><span class="line">        log.debug(&quot;A bad connection (&quot; + conn.getRealHashCode() + &quot;) attempted to return to the pool, discarding connection.&quot;);</span><br><span class="line">      &#125;</span><br><span class="line">      state.badConnectionCount++;//如果</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>连接释放流程如上所示，整体流程比较简单</p>
 
           
         
@@ -1707,325 +2013,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://tcwloy.github.io/2018/08/13/java-集合-概述/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="tank">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="http://tx.haiqq.com/uploads/allimg/c170727/150111a15b30-331Z.jpg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="tank的个人博客">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/08/13/java-集合-概述/" itemprop="url">java集合-概述</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-08-13T14:43:14+08:00">
-                2018-08-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/java/" itemprop="url" rel="index">
-                    <span itemprop="name">java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/java/集合/" itemprop="url" rel="index">
-                    <span itemprop="name">集合</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="集合是什么"><a href="#集合是什么" class="headerlink" title="集合是什么"></a>集合是什么</h2><p>集合是容纳对象的容器。我们在写代码的时候经常会遇到这种场景，需要一个东西来容纳多个对象,传统方式会通过数组来满足这个需求，然而数组有其局限性（数组初始化时就需要指定大小），当我们不确定容纳对象的个数时，数组就无法满足了，这个时候，java标准库中提供的集合是更好的选择。<br>集合类主要负责保存、盛装其他数据，因此集合类也被称为容器类。所以的集合类都位于java.util包下，后来为了处理多线程环境下的并发安全问题，java5还在java.util.concurrent包下提供了一些多线程支持的集合类。</p>
-<h2 id="集合继承体系"><a href="#集合继承体系" class="headerlink" title="集合继承体系"></a>集合继承体系</h2><p>废话不多先上图<br><img src="/2018/08/13/java-集合-概述/collection.gif" title="集合继承关系图"><br>对于上图做如下说明：  </p>
-<ul>
-<li>Collection接口继承自Iterable，图中并未画出</li>
-<li>Deque（双端队列）接口继承自Queue,图中未画出</li>
-<li>Stack、Vector、HashTable为遗留容器，尽量避免使用</li>
-<li>List经常用来存储有序序列（有序指的是存储顺序），常用实现类为ArrayList和LinkedList</li>
-<li>Set经常用来去除重复数据，常用实现类是HashSet，如果需要有序则使用TreeSet（需要排序规则）</li>
-<li>Map经常用来保存键值对，常用实现类是HashMap，如果需要有序则使用TreeMap（需要排序规则）</li>
-<li>Comparable与Comparator：可以把Comparable理解为内部比较器，而Comparator是外部比较器,实现Comparator接口代码更加灵活，可以定义某个类的多个比较器，从而在排序时根据实际场景自由调用，而Comparable接口实现后便不能改动</li>
-<li>Collections和Arrays是两个工具类，用法后面单独介绍</li>
-</ul>
-<p>下图来自csdn的一篇博客，比较全面，感谢作者分享。<a href="https://blog.csdn.net/u010887744/article/details/50575735" target="_blank" rel="noopener">点击查看原文</a>，点击<a href="https://img-blog.csdn.net/20160124221843905" target="_blank" rel="noopener">查看大图</a><br><img src="https://img-blog.csdn.net/20160124221843905" alt="集合继承关系" title="集合继承关系"></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://tcwloy.github.io/2018/08/11/java-jvm-概述/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="tank">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="http://tx.haiqq.com/uploads/allimg/c170727/150111a15b30-331Z.jpg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="tank的个人博客">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/08/11/java-jvm-概述/" itemprop="url">jvm概述</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-08-11T13:14:50+08:00">
-                2018-08-11
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/java/" itemprop="url" rel="index">
-                    <span itemprop="name">java</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/java/jvm/" itemprop="url" rel="index">
-                    <span itemprop="name">jvm</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="JVM是什么"><a href="#JVM是什么" class="headerlink" title="JVM是什么"></a>JVM是什么</h2><p>JVM是Java Virtual Machine（Java虚拟机）的缩写，JVM包含在JRE中，是java能够跨平台的基础，JVM屏蔽了底层操作系统的细节，提供了java字节码的运行环境，所有java程序都会被编译成.class也就是字节码文件，字节码文件先由我们的JVM进行解释，最后再交给本地系统，实现了Java的可移植性。</p>
-<p>待续…</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2076,7 +2063,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives/">
-                <span class="site-state-item-count">11</span>
+                <span class="site-state-item-count">13</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2087,7 +2074,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-count">7</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2098,7 +2085,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">13</span>
+                <span class="site-state-item-count">15</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
