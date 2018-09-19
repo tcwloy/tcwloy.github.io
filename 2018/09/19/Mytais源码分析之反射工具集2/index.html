@@ -110,7 +110,7 @@
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://tcwloy.github.io/2018/09/19/Mytais源码分析之反射工具集2/TypeParameterResolver.png">
 <meta property="og:image" content="http://tcwloy.github.io/2018/09/19/Mytais源码分析之反射工具集2/Type.svg">
-<meta property="og:updated_time" content="2018-09-19T08:35:40.210Z">
+<meta property="og:updated_time" content="2018-09-19T08:37:11.696Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Mytais源码分析之反射工具集（二）">
 <meta name="twitter:description" content="首先，我们来了解一条JavaBean规范：类中定义的成员变量也称为“字段”，属性则是通过getter/setter方法得到的，属性只与类中的方法有关，与是否存在对应成员变量没有关系。例如，存在getA()方法和setA(String)方法，无论类中是否定义了字段String a，我们都认为该类中存在属性a。在后面的分析中，属性的getter/setter方法与同名的字段虽然会一起出现，但还是有必要">
@@ -444,11 +444,12 @@
 <li>WildcardType:表示的是通配符泛型，例如？ extends Number 和？ super Integer。WildcardType接口有两个方法:<blockquote>
 <ul>
 <li>Type[] getUpperBounds:返回泛型变量的上界</li>
-<li>Type[] getLowerBounds:返回泛型变量的下界<br>相关细节，可使用使用Mybatis测试源码中TypeParameterResolverTest类进行跟踪</li>
+<li>Type[] getLowerBounds:返回泛型变量的下界  </li>
 </ul>
 </blockquote>
 </li>
 </ul>
+<p>相关细节，可使用使用Mybatis测试源码中TypeParameterResolverTest类进行跟踪</p>
 
       
     </div>
