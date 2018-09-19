@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+  <meta name="baidu-site-verification" content="aBFaYGSIOr" />
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="google-site-verification" content="true" />
+
+
+
+
+
+
+
+  <meta name="baidu-site-verification" content="true" />
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Mybatis,源码分析," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2" />
+
+
+
+
+
+
+<meta name="description" content="首先，我们来了解一条JavaBean规范：类中定义的成员变量也称为“ 宇段” ，属性则是通过ge阳r/setter 方法得到的，属性只与类中的方法有关，与是否存在对应成员变量没有关系。例如，存在getA （）方法和setA(String）方法，无论类中是否定义了字段S 位ing a ，我们都认为该类中存在属性a。在后面的分析中，属性的ge忧er/setter 方法与同名的字段虽然会一起出现，但还是">
+<meta name="keywords" content="Mybatis,源码分析">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mytais源码分析之反射工具集（二）">
+<meta property="og:url" content="http://tcwloy.github.io/2018/09/19/Mytais源码分析之反射工具集2/index.html">
+<meta property="og:site_name" content="tank的个人博客">
+<meta property="og:description" content="首先，我们来了解一条JavaBean规范：类中定义的成员变量也称为“ 宇段” ，属性则是通过ge阳r/setter 方法得到的，属性只与类中的方法有关，与是否存在对应成员变量没有关系。例如，存在getA （）方法和setA(String）方法，无论类中是否定义了字段S 位ing a ，我们都认为该类中存在属性a。在后面的分析中，属性的ge忧er/setter 方法与同名的字段虽然会一起出现，但还是">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://tcwloy.github.io/2018/09/19/Mytais源码分析之反射工具集2/TypeParameterResolver.png">
+<meta property="og:image" content="http://tcwloy.github.io/2018/09/19/Mytais源码分析之反射工具集2/Type.svg">
+<meta property="og:updated_time" content="2018-09-19T08:30:21.850Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Mytais源码分析之反射工具集（二）">
+<meta name="twitter:description" content="首先，我们来了解一条JavaBean规范：类中定义的成员变量也称为“ 宇段” ，属性则是通过ge阳r/setter 方法得到的，属性只与类中的方法有关，与是否存在对应成员变量没有关系。例如，存在getA （）方法和setA(String）方法，无论类中是否定义了字段S 位ing a ，我们都认为该类中存在属性a。在后面的分析中，属性的ge忧er/setter 方法与同名的字段虽然会一起出现，但还是">
+<meta name="twitter:image" content="http://tcwloy.github.io/2018/09/19/Mytais源码分析之反射工具集2/TypeParameterResolver.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://tcwloy.github.io/2018/09/19/Mytais源码分析之反射工具集2/"/>
+
+
+
+
+
+  <title>Mytais源码分析之反射工具集（二） | tank的个人博客</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?393f7b635abb8ad26dbf17705d960277";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <a href="https://github.com/tcwloy"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">tank的个人博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://tcwloy.github.io/2018/09/19/Mytais源码分析之反射工具集2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="tank">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://tx.haiqq.com/uploads/allimg/c170727/150111a15b30-331Z.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="tank的个人博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Mytais源码分析之反射工具集（二）</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-09-19T10:40:51+08:00">
+                2018-09-19
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Mybatis/" itemprop="url" rel="index">
+                    <span itemprop="name">Mybatis</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>首先，我们来了解一条JavaBean规范：类中定义的成员变量也称为“ 宇段” ，属性则是通过ge阳r/setter 方法得到的，属性只与类中的方法有关，与是否存在对应成员变量没有关系。例如，存在getA （）方法和setA(String）方法，无论类中是否定义了字段S 位ing a ，我们都认为该类中存在属性a。在后面的分析中，属性的ge忧er/setter 方法与同名的字段虽然会一起出现，但还是有必要让读者区分这两个概念。</p>
+<h2 id="Reflector"><a href="#Reflector" class="headerlink" title="Reflector"></a>Reflector</h2><p>Reflector主要用于保存类的元数据信息，比如属性信息、方法信息等，如下是Reflector中的主要属性<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">public class Reflector &#123;</span><br><span class="line"></span><br><span class="line">  private final Class&lt;?&gt; type;//对应Class类型</span><br><span class="line">  private final String[] readablePropertyNames;//可读属性信息</span><br><span class="line">  private final String[] writeablePropertyNames;//可写属性信息</span><br><span class="line">  private final Map&lt;String, Invoker&gt; setMethods = new HashMap&lt;&gt;();//set方法集合，key是属性名称</span><br><span class="line">  private final Map&lt;String, Invoker&gt; getMethods = new HashMap&lt;&gt;();//get方法集合，key是属性名称</span><br><span class="line">  private final Map&lt;String, Class&lt;?&gt;&gt; setTypes = new HashMap&lt;&gt;();//set方法参数类型集合，key是属性名称</span><br><span class="line">  private final Map&lt;String, Class&lt;?&gt;&gt; getTypes = new HashMap&lt;&gt;();//get方法返回类型集合，key是属性名称</span><br><span class="line">  private Constructor&lt;?&gt; defaultConstructor;//默认构造方法</span><br><span class="line"></span><br><span class="line">  private Map&lt;String, String&gt; caseInsensitivePropertyMap = new HashMap&lt;&gt;();//所有属性名称集合，key是属性名称（忽略大小写）</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>接着来看下，如何初始化这些属性信息<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">public Reflector(Class&lt;?&gt; clazz) &#123;</span><br><span class="line">  type = clazz;//类型直接赋给type</span><br><span class="line">  addDefaultConstructor(clazz);//默认构造方法赋值，即上面的defaultConstructor</span><br><span class="line">  addGetMethods(clazz);//getMethods和getTypes集合初始化</span><br><span class="line">  addSetMethods(clazz);//setMethods和setTypes集合初始化</span><br><span class="line">  addFields(clazz);//对于没有get、set方法的属性，添加相应的key、value到get、set方法集合及参数和返回值集合</span><br><span class="line">  readablePropertyNames = getMethods.keySet().toArray(new String[getMethods.keySet().size()]);//getMethods所有key即是可读属性集合</span><br><span class="line">  writeablePropertyNames = setMethods.keySet().toArray(new String[setMethods.keySet().size()]);//setMethods所有key即是可写属性集合</span><br><span class="line">  //读写属性集合的并集就是所有属性的集合</span><br><span class="line">  for (String propName : readablePropertyNames) &#123;</span><br><span class="line">    caseInsensitivePropertyMap.put(propName.toUpperCase(Locale.ENGLISH), propName);</span><br><span class="line">  &#125;</span><br><span class="line">  for (String propName : writeablePropertyNames) &#123;</span><br><span class="line">    caseInsensitivePropertyMap.put(propName.toUpperCase(Locale.ENGLISH), propName);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>addGetMethods和addSetMethods逻辑基本相同，我们以addGetMethods为例解释<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">private void addGetMethods(Class&lt;?&gt; cls) &#123;</span><br><span class="line">  Map&lt;String, List&lt;Method&gt;&gt; conflictingGetters = new HashMap&lt;&gt;();//get方法全集，包括父类子类所有属性，key是属性，value是属性对应的get方法集合</span><br><span class="line">  Method[] methods = getClassMethods(cls);//返回当前类及父类所有方法信息</span><br><span class="line">  for (Method method : methods) &#123;</span><br><span class="line">    if (method.getParameterTypes().length &gt; 0) &#123;//如果没有返回值，肯定不是get方法</span><br><span class="line">      continue;</span><br><span class="line">    &#125;</span><br><span class="line">    String name = method.getName();//获取方法名</span><br><span class="line">    if ((name.startsWith(&quot;get&quot;) &amp;&amp; name.length() &gt; 3)</span><br><span class="line">        || (name.startsWith(&quot;is&quot;) &amp;&amp; name.length() &gt; 2)) &#123;</span><br><span class="line">      name = PropertyNamer.methodToProperty(name);//用到上篇提到的属性工具，获取属性名</span><br><span class="line">      addMethodConflict(conflictingGetters, name, method);//属性方法对应关系添加到集合中，属性对应方法可能是一对多</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  resolveGetterConflicts(conflictingGetters);//处理上面提到的一对多情况</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">//属性名相同的方法整理在一起</span><br><span class="line">private void addMethodConflict(Map&lt;String, List&lt;Method&gt;&gt; conflictingMethods, String name, Method method) &#123;</span><br><span class="line">  List&lt;Method&gt; list = conflictingMethods.computeIfAbsent(name, k -&gt; new ArrayList&lt;&gt;());</span><br><span class="line">  list.add(method);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>接着看下getClassMethods方法，通过它可以获取到类中所有方法<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">private Method[] getClassMethods(Class&lt;?&gt; cls) &#123;</span><br><span class="line">  Map&lt;String, Method&gt; uniqueMethods = new HashMap&lt;&gt;();//存储方法签名和Method关系的集合，其实主要是为了去重，方法签名完全相同的Method只需要一个就可以了</span><br><span class="line">  Class&lt;?&gt; currentClass = cls;//从当前类开始</span><br><span class="line">  while (currentClass != null &amp;&amp; currentClass != Object.class) &#123;//当前类不是null，且不是Object类</span><br><span class="line">    addUniqueMethods(uniqueMethods, currentClass.getDeclaredMethods());//存储遍历到的类的签名和Method信息</span><br><span class="line"></span><br><span class="line">    // we also need to look for interface methods -</span><br><span class="line">    // because the class may be abstract 存储遍历到的类实现的接口中的方法也需要分析保存</span><br><span class="line">    Class&lt;?&gt;[] interfaces = currentClass.getInterfaces();</span><br><span class="line">    for (Class&lt;?&gt; anInterface : interfaces) &#123;</span><br><span class="line">      addUniqueMethods(uniqueMethods, anInterface.getMethods());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    currentClass = currentClass.getSuperclass();//获取父类</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  Collection&lt;Method&gt; methods = uniqueMethods.values();//获取集合中所有的方法，无签名相同的Method</span><br><span class="line"></span><br><span class="line">  return methods.toArray(new Method[methods.size()]);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>继续看看如何添加方法到uniqueMethods以及方法签名的生成方式，以下提到的桥接方法，可以参考<a href="https://www.cnblogs.com/zsg88/p/7588929.html" target="_blank" rel="noopener">博文</a><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line">private void addUniqueMethods(Map&lt;String, Method&gt; uniqueMethods, Method[] methods) &#123;</span><br><span class="line">  for (Method currentMethod : methods) &#123;</span><br><span class="line">    if (!currentMethod.isBridge()) &#123;//不是桥接方法</span><br><span class="line">      String signature = getSignature(currentMethod);//获取方法签名</span><br><span class="line">      // check to see if the method is already known</span><br><span class="line">      // if it is known, then an extended class must have</span><br><span class="line">      // overridden a method</span><br><span class="line">      if (!uniqueMethods.containsKey(signature)) &#123;//如果签名方法不在集合中</span><br><span class="line">        if (canControlMemberAccessible()) &#123;</span><br><span class="line">          try &#123;</span><br><span class="line">            currentMethod.setAccessible(true);//开放访问权限</span><br><span class="line">          &#125; catch (Exception e) &#123;</span><br><span class="line">            // Ignored. This is only a final precaution, nothing we can do.</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        uniqueMethods.put(signature, currentMethod);//签名方法加入集合</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">//最终返回的方法签名类似：返回类型名称#方法名称:参数1类型名称,参数2类型名称 这种格式</span><br><span class="line">private String getSignature(Method method) &#123;</span><br><span class="line">  StringBuilder sb = new StringBuilder();</span><br><span class="line">  Class&lt;?&gt; returnType = method.getReturnType();//获取方法返回类型</span><br><span class="line">  if (returnType != null) &#123;</span><br><span class="line">    sb.append(returnType.getName()).append(&apos;#&apos;);</span><br><span class="line">  &#125;</span><br><span class="line">  sb.append(method.getName());</span><br><span class="line">  Class&lt;?&gt;[] parameters = method.getParameterTypes();</span><br><span class="line">  for (int i = 0; i &lt; parameters.length; i++) &#123;</span><br><span class="line">    if (i == 0) &#123;</span><br><span class="line">      sb.append(&apos;:&apos;);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">      sb.append(&apos;,&apos;);</span><br><span class="line">    &#125;</span><br><span class="line">    sb.append(parameters[i].getName());</span><br><span class="line">  &#125;</span><br><span class="line">  return sb.toString();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>终于到了最后一步resolveGetterConflicts，可能有人会有疑问，签名不是按照方法签名去过重了么，为什么这里还要解决冲突？请注意，这里是按照属性解决冲突的，比如属性name，这里确定的是保留哪个setName方法。而按照方法签名去重，方法签名中还包括返回值和参数，如果发生复写，可能对于同一个属性，父类子类中返回的类型不同，那么方法签名也就不同，从属性的维度来看，两个Method对象都被保存下来了，resolveGetterConflicts就是为了确认保留哪一个Method对象<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">private void resolveGetterConflicts(Map&lt;String, List&lt;Method&gt;&gt; conflictingGetters) &#123;</span><br><span class="line">  for (Entry&lt;String, List&lt;Method&gt;&gt; entry : conflictingGetters.entrySet()) &#123;</span><br><span class="line">    Method winner = null;//保存的是冲突中获胜的Method对象</span><br><span class="line">    String propName = entry.getKey();</span><br><span class="line">    for (Method candidate : entry.getValue()) &#123;//对属性对应的每个get方法</span><br><span class="line">      if (winner == null) &#123;</span><br><span class="line">        winner = candidate;//首次进入，winner直接给第一个方法，如果只有一个那直接就是它，通常情况下都只有一个</span><br><span class="line">        continue;</span><br><span class="line">      &#125;</span><br><span class="line">      Class&lt;?&gt; winnerType = winner.getReturnType();</span><br><span class="line">      Class&lt;?&gt; candidateType = candidate.getReturnType();</span><br><span class="line">      if (candidateType.equals(winnerType)) &#123;//如果上次winner和当前Method返回类型相同</span><br><span class="line">        if (!boolean.class.equals(candidateType)) &#123;//不符合javabean规范</span><br><span class="line">          throw new ReflectionException(</span><br><span class="line">              &quot;Illegal overloaded getter method with ambiguous type for property &quot;</span><br><span class="line">                  + propName + &quot; in class &quot; + winner.getDeclaringClass()</span><br><span class="line">                  + &quot;. This breaks the JavaBeans specification and can cause unpredictable results.&quot;);</span><br><span class="line">        &#125; else if (candidate.getName().startsWith(&quot;is&quot;)) &#123;</span><br><span class="line">          winner = candidate;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125; else if (candidateType.isAssignableFrom(winnerType)) &#123;//如果当前返回是winner返回的子类，那么winner不变</span><br><span class="line">        // OK getter type is descendant</span><br><span class="line">      &#125; else if (winnerType.isAssignableFrom(candidateType)) &#123;//如果winner返回类型是当前方法返回值类型的子类，则winner用当前Method</span><br><span class="line">        winner = candidate;</span><br><span class="line">      &#125; else &#123;//不符合javabean规范</span><br><span class="line">        throw new ReflectionException(</span><br><span class="line">            &quot;Illegal overloaded getter method with ambiguous type for property &quot;</span><br><span class="line">                + propName + &quot; in class &quot; + winner.getDeclaringClass()</span><br><span class="line">                + &quot;. This breaks the JavaBeans specification and can cause unpredictable results.&quot;);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    addGetMethod(propName, winner);//添加method</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void addGetMethod(String name, Method method) &#123;</span><br><span class="line">  if (isValidPropertyName(name)) &#123;//校验名称</span><br><span class="line">    getMethods.put(name, new MethodInvoker(method));//放入getMethods</span><br><span class="line">    Type returnType = TypeParameterResolver.resolveReturnType(method, type);//获取返回类型</span><br><span class="line">    getTypes.put(name, typeToClass(returnType));//放入getTypes</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="ReflectorFactory"><a href="#ReflectorFactory" class="headerlink" title="ReflectorFactory"></a>ReflectorFactory</h2><h3 id="接口说明"><a href="#接口说明" class="headerlink" title="接口说明"></a>接口说明</h3><p>ReflectorFactory是产生Reflector的一个工厂，它提供了如下方法：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">public interface ReflectorFactory &#123;</span><br><span class="line"></span><br><span class="line">  boolean isClassCacheEnabled();</span><br><span class="line"></span><br><span class="line">  void setClassCacheEnabled(boolean classCacheEnabled);</span><br><span class="line"></span><br><span class="line">  Reflector findForClass(Class&lt;?&gt; type);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>最重要的是findForClass方法，它可以返回一个Reflector对象，包含了指定Class的元数据信息。ReflectorFactory有一个默认实现DefaultReflectorFactory</p>
+<h3 id="DefaultReflectorFactory"><a href="#DefaultReflectorFactory" class="headerlink" title="DefaultReflectorFactory"></a>DefaultReflectorFactory</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">public class DefaultReflectorFactory implements ReflectorFactory &#123;</span><br><span class="line">  private boolean classCacheEnabled = true;//是否缓存类的元数据信息</span><br><span class="line">  private final ConcurrentMap&lt;Class&lt;?&gt;, Reflector&gt; reflectorMap = new ConcurrentHashMap&lt;&gt;();//缓存Class到Reflector的映射关系</span><br><span class="line"></span><br><span class="line">  public DefaultReflectorFactory() &#123;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  @Override</span><br><span class="line">  public boolean isClassCacheEnabled() &#123;</span><br><span class="line">    return classCacheEnabled;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  @Override</span><br><span class="line">  public void setClassCacheEnabled(boolean classCacheEnabled) &#123;</span><br><span class="line">    this.classCacheEnabled = classCacheEnabled;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  @Override</span><br><span class="line">  public Reflector findForClass(Class&lt;?&gt; type) &#123;</span><br><span class="line">    if (classCacheEnabled) &#123;//如果启用缓存，则从reflectorMap中获取</span><br><span class="line">            // synchronized (type) removed see issue #461</span><br><span class="line">      return reflectorMap.computeIfAbsent(type, Reflector::new);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">      return new Reflector(type);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="TypeParameterResolver"><a href="#TypeParameterResolver" class="headerlink" title="TypeParameterResolver"></a>TypeParameterResolver</h2><p>上文分析Reflector实现时，addGetMethod使用到了TypeParameterResolver.resolveReturnType(method, type)方法，我们来看下TypeParameterResolver是干什么的<br><img src="/2018/09/19/Mytais源码分析之反射工具集2/TypeParameterResolver.png" title="TypeParameterResolver"><br>重点关注上面框出来的public方法，这三个方法对外提供服务</p>
+<ol>
+<li>Type resolveFieldType(Field field, Type srcType)用于解析属性类型</li>
+<li>Type resolveReturnType(Method method, Type srcType)用于解析方法返回值类型</li>
+<li>Type[] resolveParamTypes(Method method, Type srcType)用于解析方法参数类型  </li>
+</ol>
+<p>三者实现方式类似，都使用了resolveType方法，我们以resolveFieldType为例<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">public static Type resolveFieldType(Field field, Type srcType) &#123;</span><br><span class="line">  Type fieldType = field.getGenericType();//返回属性声明的Type类型</span><br><span class="line">  Class&lt;?&gt; declaringClass = field.getDeclaringClass();//返回声明此属性的类</span><br><span class="line">  return resolveType(fieldType, srcType, declaringClass);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>先看下getType() 和 getGenericType()的区别 ：<br>getType()： 获取属性声明时类型对象（返回class对象）<br>getGenericType() ： 返回属性声明的Type类型<br>1.首先是返回的类型不一样，一个是Class对象一个是Type接口。<br>2.如果属性是一个泛型，从getType（）只能得到这个属性的接口类型。但从getGenericType（）还能得到这个泛型的参数类型。<br>3.getGenericType（）如果当前属性有签名属性类型就返回，否则就返回 Field.getType()。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">private static Type resolveType(Type type, Type srcType, Class&lt;?&gt; declaringClass) &#123;</span><br><span class="line">  if (type instanceof TypeVariable) &#123;//解析TypeVariable类型</span><br><span class="line">    return resolveTypeVar((TypeVariable&lt;?&gt;) type, srcType, declaringClass);</span><br><span class="line">  &#125; else if (type instanceof ParameterizedType) &#123;//解析ParameterizedType类型</span><br><span class="line">    return resolveParameterizedType((ParameterizedType) type, srcType, declaringClass);</span><br><span class="line">  &#125; else if (type instanceof GenericArrayType) &#123;//解析GenericArrayType类型</span><br><span class="line">    return resolveGenericArrayType((GenericArrayType) type, srcType, declaringClass);</span><br><span class="line">  &#125; else &#123;//普通Class类型</span><br><span class="line">    return type;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>上面出现了三个类型判断，这三个类型又是什么呢？这三个类型均继承自Type接口<br><img src="/2018/09/19/Mytais源码分析之反射工具集2/Type.svg" title="Type"></p>
+<ul>
+<li>Class: 表示的是原始类型。Class类的对象表示JVM中的一个类或接口，每个Java类在JVM里都表现为一个Class对象。在代码中可以通过“类名.class”、“对象.getClass()”或“Class.forName(类名)”的方式获取。数组也会被映射成Class对象，所有类型相同且维数相同的数组都共享同一个Class对象。</li>
+<li>ParameterizedType：表示的是参数化类型，例如List<string> 、Map&lt;Integer,String&gt;这种带有泛型的类型。ParameterizedType接口中常用的方法有三个:<blockquote>
+<ul>
+<li>Type getRawType()：返回参数化类型中的原始类型，例如List<string> 的原始类型为List</string></li>
+<li>Type[] getActualTypeArguments()：获取参数化类型的类型变量或是实际类型列表，例如Map&lt;Integer, String&gt; 的实际泛型列表Integer和String 。需要注意的是，该列表的元素类型都是Type，也就是说可能存在多层嵌套的情况。</li>
+<li>Type getOwnerType():返回是类型所属的类型，例如存在A<t>类，其中定义了内部类lnnerA<k>，则InnerA<k>所属的类型为A<t>，如果是顶层类型则返回null。这种关系比较常见的示例是Map&lt;K,V&gt;接口与Map.Entry&lt;K,V&gt;接口，Map&lt;K,V&gt;接口是Map.Entry&lt;K,V&gt;接口的所有者。</t></k></k></t></li>
+</ul>
+</blockquote>
+</string></li>
+<li>TypeVariable:表示的是类型变量，它用来反映在JVM编译该泛型前的信息。例如List<t>中的T就是类型变量，它在编译时需被转换为一个具体的类型后才能正常使用。接口方法：<blockquote>
+<ul>
+<li>Type[] getBounds():获取类型变量的上边界，如果未明确声明上边界则默认为Object。例如class Test<k extends="" person=""> 中K的上界就是Person</k></li>
+<li>D getGenericDeclaration():获取声明该类型变量的原始类型，例如class Test&lt;K extends Person＞中的原始类型是Test 。</li>
+<li>String getName():获取在源码中定义时的名字，上例中为K</li>
+</ul>
+</blockquote>
+</t></li>
+<li>GenericArrayType:表示的是数组类型且组成元素是ParameterizedType或TypeVariable,例如List<string>[]或T[]。该接口只有Type getGenericComponentType()一个方法，它返回数组的组成元素。</string></li>
+<li>WildcardType:表示的是通配符泛型，例如？ extends Number 和？ super Integer。WildcardType接口有两个方法:<blockquote>
+<ul>
+<li>Type[] getUpperBounds:返回泛型变量的上界</li>
+<li>Type[] getLowerBounds:返回泛型变量的下界<br>相关细节，可使用使用Mybatis测试源码中TypeParameterResolverTest类进行跟踪</li>
+</ul>
+</blockquote>
+</li>
+</ul>
+
+      
+    </div>
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+
+      
+    </div>
+
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Mybatis/" rel="tag"># Mybatis</a>
+          
+            <a href="/tags/源码分析/" rel="tag"># 源码分析</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/09/15/设计模式/" rel="next" title="设计模式">
+                <i class="fa fa-chevron-left"></i> 设计模式
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zODc5MC8xNTMxOA=="></div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="http://tx.haiqq.com/uploads/allimg/c170727/150111a15b30-331Z.jpg"
+               alt="tank" />
+          <p class="site-author-name" itemprop="name">tank</p>
+           
+              <p class="site-description motion-element" itemprop="description">java js python spring mybatis 架构 微服务 web</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives/">
+                <span class="site-state-item-count">18</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">16</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Reflector"><span class="nav-number">1.</span> <span class="nav-text">Reflector</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ReflectorFactory"><span class="nav-number">2.</span> <span class="nav-text">ReflectorFactory</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#接口说明"><span class="nav-number">2.1.</span> <span class="nav-text">接口说明</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#DefaultReflectorFactory"><span class="nav-number">2.2.</span> <span class="nav-text">DefaultReflectorFactory</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#TypeParameterResolver"><span class="nav-number">3.</span> <span class="nav-text">TypeParameterResolver</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">tank</span>
+</div>
+
+<!--
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Gemini
+  </a>
+</div>
+
+-->
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+  
+  <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/love.js"></script>
