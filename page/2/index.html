@@ -312,6 +312,165 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://tcwloy.github.io/2018/08/24/Mytais源码分析之DataSource-UnPooledDataSource/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="tank">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://tx.haiqq.com/uploads/allimg/c170727/150111a15b30-331Z.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="tank的个人博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/08/24/Mytais源码分析之DataSource-UnPooledDataSource/" itemprop="url">Mytais源码分析之DataSource：UnPooledDataSource</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-08-24T10:46:08+08:00">
+                2018-08-24
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Mybatis/" itemprop="url" rel="index">
+                    <span itemprop="name">Mybatis</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>一年前曾经草草的看过一点Mybatis源码，对面儿上的东西有了一定的认识，然而并不深入，因此打算沉下心来重新研究一遍，所以分析起来可能比较啰嗦。以前写东西经常坚持不下来，想着记在脑子里就好，事实证明好记性不如烂笔头，找了个图片鼓励下自己<br><img src="/2018/08/24/Mytais源码分析之DataSource-UnPooledDataSource/攀登.jpg" title="一路向前"></p>
+<h2 id="获取源码"><a href="#获取源码" class="headerlink" title="获取源码"></a>获取源码</h2><p>源码地址：<a href="https://github.com/mybatis/mybatis-3" target="_blank" rel="noopener">https://github.com/mybatis/mybatis-3</a><br>官方首页：<a href="http://www.mybatis.org/mybatis-3/" target="_blank" rel="noopener">http://www.mybatis.org/mybatis-3/</a></p>
+<h2 id="使用Jdbc基础api"><a href="#使用Jdbc基础api" class="headerlink" title="使用Jdbc基础api"></a>使用Jdbc基础api</h2><p>首先，我们看下使用jdbc api是如何操作数据库的，这里的代码只是简单说明如何使用，所以就写了一个junit测试方法，没有考虑面向对象封装复用等内容<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">@Test</span><br><span class="line">public void testJdbc()&#123;</span><br><span class="line">    try &#123;</span><br><span class="line">        //1.加载驱动</span><br><span class="line">        Class.forName(&quot;org.hsqldb.jdbcDriver&quot;);</span><br><span class="line">        //2.获取数据库连接</span><br><span class="line">        try(Connection connection = DriverManager.getConnection(&quot;jdbc:hsqldb:mem:multipledrivers&quot;, &quot;sa&quot;, &quot;&quot;)) &#123;</span><br><span class="line">            testSql(connection);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; catch (ClassNotFoundException e) &#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">    &#125; catch (SQLException e) &#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void testSql(Connection connection) throws SQLException &#123;</span><br><span class="line">    //建表</span><br><span class="line">    PreparedStatement createStatement = connection.prepareStatement(&quot;create table test (id integer not null , name varchar(25) not null )&quot;);</span><br><span class="line">    createStatement.execute();</span><br><span class="line">    createStatement.close();</span><br><span class="line"></span><br><span class="line">    //插入</span><br><span class="line">    PreparedStatement insertStatement = connection.prepareStatement(&quot;insert into test values (?, ?)&quot;);</span><br><span class="line">    insertStatement.setInt(1, 1);</span><br><span class="line">    insertStatement.setString(2, &quot;xiaoming&quot;);</span><br><span class="line">    insertStatement.executeUpdate();</span><br><span class="line">    insertStatement.setInt(1, 2);</span><br><span class="line">    insertStatement.setString(2, &quot;zhangsan&quot;);</span><br><span class="line">    insertStatement.executeUpdate();</span><br><span class="line">    insertStatement.close();</span><br><span class="line"></span><br><span class="line">    //查询</span><br><span class="line">    PreparedStatement queryStatement = connection.prepareStatement(&quot;select id, name from test&quot;);</span><br><span class="line">    ResultSet resultSet = queryStatement.executeQuery();</span><br><span class="line">    while (resultSet.next()) &#123;</span><br><span class="line">        int id = resultSet.getInt(&quot;id&quot;);</span><br><span class="line">        String name = resultSet.getString(&quot;name&quot;);</span><br><span class="line">        System.out.println(&quot;id:&quot; + id + &quot;-&gt;&quot; + &quot;name:&quot; + name);</span><br><span class="line">    &#125;</span><br><span class="line">    resultSet.close();</span><br><span class="line">    queryStatement.close();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>执行结果如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">id:1-&gt;name:xiaoming</span><br><span class="line">id:2-&gt;name:zhangsan</span><br></pre></td></tr></table></figure></p>
+<p>可以看到，简单的单表CRUD操作，我们就要写这么多代码，并且需要考虑异常处理，资源关闭等，相当麻烦。好了，以上是对基础知识的回顾，下面我们开始进入正题</p>
+<h2 id="Mybatis-DataSource"><a href="#Mybatis-DataSource" class="headerlink" title="Mybatis-DataSource"></a>Mybatis-DataSource</h2><p>打开源码中datasource包，我们可以看到下面分为三个子包，分别是jndi、pooled、unpooled。<br><img src="/2018/08/24/Mytais源码分析之DataSource-UnPooledDataSource/package.png" title="包结构"><br>使用过mybatis的人都知道，我们在配置xml文件时，已经见过他们了，此处dataSource可选的三种内建数据源类型就是他们（也就是 type=”[UNPOOLED|POOLED|JNDI]”），是不是好巧<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&lt;environments default=&quot;development&quot;&gt;</span><br><span class="line">  &lt;environment id=&quot;development&quot;&gt;</span><br><span class="line">    &lt;transactionManager type=&quot;JDBC&quot;&gt;</span><br><span class="line">      &lt;property name=&quot;...&quot; value=&quot;...&quot;/&gt;</span><br><span class="line">    &lt;/transactionManager&gt;</span><br><span class="line">    &lt;dataSource type=&quot;POOLED&quot;&gt;</span><br><span class="line">      &lt;property name=&quot;driver&quot; value=&quot;$&#123;driver&#125;&quot;/&gt;</span><br><span class="line">      &lt;property name=&quot;url&quot; value=&quot;$&#123;url&#125;&quot;/&gt;</span><br><span class="line">      &lt;property name=&quot;username&quot; value=&quot;$&#123;username&#125;&quot;/&gt;</span><br><span class="line">      &lt;property name=&quot;password&quot; value=&quot;$&#123;password&#125;&quot;/&gt;</span><br><span class="line">    &lt;/dataSource&gt;</span><br><span class="line">  &lt;/environment&gt;</span><br><span class="line">&lt;/environments&gt;</span><br></pre></td></tr></table></figure></p>
+<p>下面是三种内建数据源的使用场景，<a href="http://www.mybatis.org/mybatis-3/zh/configuration.html#environments" target="_blank" rel="noopener">点击查看详细介绍</a>：<br><strong>UNPOOLED</strong> 这个数据源的实现只是每次被请求时打开和关闭连接。虽然有点慢，但对于在数据库连接可用性方面没有太高要求的简单应用程序来说，是一个很好的选择。 不同的数据库在性能方面的表现也是不一样的，对于某些数据库来说，使用连接池并不重要，这个配置就很适合这种情形<br><strong>POOLED</strong> 这种数据源的实现利用“池”的概念将 JDBC 连接对象组织起来，避免了创建新的连接实例时所必需的初始化和认证时间。 这是一种使得并发 Web 应用快速响应请求的流行处理方式<br><strong>JNDI</strong> 这个数据源的实现是为了能在如 EJB 或应用服务器这类容器中使用，容器可以集中或在外部配置数据源，然后放置一个 JNDI 上下文的引用</p>
+<h3 id="继承关系"><a href="#继承关系" class="headerlink" title="继承关系"></a>继承关系</h3><p><strong>DataSource</strong><br><img src="/2018/08/24/Mytais源码分析之DataSource-UnPooledDataSource/DataSource.png" title="DataSource"><br>Mybatis的PooledDataSource和UnPooledDataSource类均实现了DataSource接口，而DataSource类的核心方法就是getConnection，我们通过该方法获取到数据库连接connection对象，通过connection对象来完成对数据库的操作。</p>
+<h3 id="UnPooledDataSource"><a href="#UnPooledDataSource" class="headerlink" title="UnPooledDataSource"></a>UnPooledDataSource</h3><p>我们先看下UnPooledDataSource是如何实现getConnection方法的：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">public Connection getConnection() throws SQLException &#123;</span><br><span class="line">  return doGetConnection(username, password);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">@Override</span><br><span class="line">public Connection getConnection(String username, String password) throws SQLException &#123;</span><br><span class="line">  return doGetConnection(username, password);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>UnPooledDataSource类中定义了两个属性<code>username</code>和<code>password</code>,当调用UnPooledDataSource对象的getConnection方法时，如果传入了用户名密码，则使用传入的用户名密码调用doGetConnection方法，如果未传入，则使用<code>username</code>和<code>password</code>属性作为参数，调用doGetConnection；因此doGetConnection方法是此处的核心，我们继续看看doGetConnection方法(为了说明简单直接，后面就直接在代码中添加注释解释，需要特殊说明的再单独分出来)<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">private Connection doGetConnection(String username, String password) throws SQLException &#123;</span><br><span class="line">  Properties props = new Properties();</span><br><span class="line">  //driverProperties是UnPooledDataSource类的属性，如果不空，则把driverProperties全部添加到属性变量props中</span><br><span class="line">  if (driverProperties != null) &#123;</span><br><span class="line">    props.putAll(driverProperties);</span><br><span class="line">  &#125;</span><br><span class="line">  if (username != null) &#123;</span><br><span class="line">    props.setProperty(&quot;user&quot;, username);</span><br><span class="line">  &#125;</span><br><span class="line">  if (password != null) &#123;</span><br><span class="line">    props.setProperty(&quot;password&quot;, password);</span><br><span class="line">  &#125;</span><br><span class="line">  return doGetConnection(props);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private Connection doGetConnection(Properties properties) throws SQLException &#123;</span><br><span class="line">  initializeDriver();//初始化driver</span><br><span class="line">  Connection connection = DriverManager.getConnection(url, properties);//很熟悉了，获取数据库连接</span><br><span class="line">  configureConnection(connection);//设置连接信息，主要包括是否自动提交和数据库隔离级别</span><br><span class="line">  return connection;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>解释下initializeDriver，这个方法主要是保证jdbc驱动已被加载且只加载一次，因此使用了synchronized关键字<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">private synchronized void initializeDriver() throws SQLException &#123;</span><br><span class="line">  //判断使用的驱动是否加载</span><br><span class="line">  if (!registeredDrivers.containsKey(driver)) &#123;</span><br><span class="line">    Class&lt;?&gt; driverType;</span><br><span class="line">    try &#123;</span><br><span class="line">      if (driverClassLoader != null) &#123;//如果driverClassLoader不空，用driverClassLoader加载driver</span><br><span class="line">        driverType = Class.forName(driver, true, driverClassLoader);</span><br><span class="line">      &#125; else &#123;</span><br><span class="line">        //否则Resources.classForName加载,该方法实际使用的是ClassLoader.getSystemClassLoader()返回的类加载器</span><br><span class="line">        driverType = Resources.classForName(driver);</span><br><span class="line">      &#125;</span><br><span class="line">      // DriverManager requires the driver to be loaded via the system ClassLoader.</span><br><span class="line">      // http://www.kfu.com/~nsayer/Java/dyn-jdbc.html</span><br><span class="line">      Driver driverInstance = (Driver)driverType.newInstance();</span><br><span class="line">      //DriverManager需要使用系统类加载器加载的driver，因此此处使用系统加载的代理类包装,参考http://www.kfu.com/~nsayer/Java/dyn-jdbc.html</span><br><span class="line">      DriverManager.registerDriver(new DriverProxy(driverInstance));</span><br><span class="line">      registeredDrivers.put(driver, driverInstance);</span><br><span class="line">    &#125; catch (Exception e) &#123;</span><br><span class="line">      throw new SQLException(&quot;Error setting driver on UnpooledDataSource. Cause: &quot; + e);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>configureConnection方法也放出来<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">private void configureConnection(Connection conn) throws SQLException &#123;</span><br><span class="line">  if (autoCommit != null &amp;&amp; autoCommit != conn.getAutoCommit()) &#123;//设置是否自动提交</span><br><span class="line">    conn.setAutoCommit(autoCommit);</span><br><span class="line">  &#125;</span><br><span class="line">  if (defaultTransactionIsolationLevel != null) &#123;//设置隔离级别</span><br><span class="line">    conn.setTransactionIsolation(defaultTransactionIsolationLevel);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>到了这里，我们已经可以通过UnpooledDataSource获取到数据库连接了<br>本来想一篇介绍完所有的DataSource内容的，但是写到这里，再看看PooledDataSource的内容，我选择放弃了，PooledDataSource单独介绍</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    <div>
+      
+    </div>
+
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://tcwloy.github.io/2018/08/16/java-集合-AbstractCollection/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1973,7 +2132,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives/">
-                <span class="site-state-item-count">19</span>
+                <span class="site-state-item-count">20</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -1984,7 +2143,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-count">11</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1995,7 +2154,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">16</span>
+                <span class="site-state-item-count">18</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
